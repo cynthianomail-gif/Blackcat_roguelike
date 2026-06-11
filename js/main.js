@@ -12,6 +12,9 @@ import { Player } from "./entities/Player.js";
 import { BulletPool } from "./entities/BulletPool.js";
 import { ItemManager } from "./items/ItemManager.js";
 import { SynergyAlert } from "./ui/SynergyAlert.js";
+import { HUD } from "./ui/HUD.js";
+import { MapDisplay } from "./ui/MapDisplay.js";
+import { ItemDisplay } from "./ui/ItemDisplay.js";
 import { generateFloor } from "./world/RoomGenerator.js";
 import { CANVAS_W, FLOOR_Y, PLAYER_H } from "./core/Constants.js";
 
@@ -32,7 +35,12 @@ gm.player = player;
 // ── 道具系統 ──
 const itemManager = new ItemManager(player, gm);
 gm.itemManager = itemManager;
+
+// ── UI 層 ──
 const synergyAlert = new SynergyAlert();
+const hud = new HUD(player, gm);
+const mapDisplay = new MapDisplay(input);
+const itemDisplay = new ItemDisplay();
 
 // ── 程序生成樓層 ──
 let floor = generateFloor(1, gm.seed);
@@ -44,6 +52,10 @@ renderer.scene.camera = camera;
 renderer.scene.player = player;
 renderer.scene.bullets = bulletPool.bullets;
 renderer.scene.synergyAlert = synergyAlert;
+renderer.scene.hud = hud;
+renderer.scene.mapDisplay = mapDisplay;
+renderer.scene.itemDisplay = itemDisplay;
+mapDisplay.floor = floor;
 
 function syncSceneToRoom() {
   const room = floor.currentRoom;
@@ -102,6 +114,8 @@ function update(dt) {
   const enemies = renderer.scene.enemies || [];
   bulletPool.update(dt, enemies.filter(e => e.active), player);
   synergyAlert.update(dt);
+  hud.update(dt);
+  itemDisplay.update(dt);
 
   if (floorTransitionTimer >= 0) {
     floorTransitionTimer -= dt;

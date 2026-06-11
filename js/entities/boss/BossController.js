@@ -171,26 +171,6 @@ export class BossController extends BaseEnemy {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-
-    this.drawBossHPBar(ctx);
-  }
-
-  // 畫面頂端 Boss 血條（Task 9 後改由 HUD 接管）
-  drawBossHPBar(ctx) {
-    if (this.isDying) return;
-    const barW = 400, barH = 14;
-    const x = (CANVAS_W - barW) / 2, y = 18;
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.fillRect(x - 3, y - 3, barW + 6, barH + 6);
-    ctx.fillStyle = "#3a3a3a";
-    ctx.fillRect(x, y, barW, barH);
-    ctx.fillStyle = this.phase === 2 ? "#ff5e3a" : "#c8102e";
-    ctx.fillRect(x, y, barW * (this.hp / this.maxHP), barH);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(this.pattern.name, CANVAS_W / 2, y + barH + 16);
-    ctx.restore();
+    // Boss 血條由 HUD.drawBossBar 繪製（不受 Camera 影響）
   }
 }

@@ -1,0 +1,153 @@
+// =====================================================
+// HUD.js — 戰鬥資訊列（Camera reset 後繪製，不受震動影響）
+// 血量 (10,10)｜EX 條 (10,60)｜金幣/炸彈/鑰匙 (10,90)
+// Boss 血條：頂端中央 (200,10) 寬 500
+// =====================================================
+import { EX_ENERGY_MAX } from "../core/Constants.js";
+
+const HEART_SIZE = 22;
+const HEART_GAP = 6;
+const EX_BAR_W = 150, EX_BAR_H = 12;
+const EX_BLINK_INTERVAL = 15; // EX 滿時「EX!」閃爍週期（幀）
+
+export class HUD {
+  constructor(player, gm) {
+    this.player = player;
+    this.gm = gm;
+    this.blinkTimer = 0;
+  }
+
+  update(dt) { this.blinkTimer += dt; }
+
+  draw(ctx) {
+    if (!this.player) return;
+    ctx.save();
+    this.drawHearts(ctx);
+    this.drawEXBar(ctx);
+    this.drawResources(ctx);
+    this.drawBossBar(ctx);
+    ctx.restore();
+  }
+
+  // ── 血量：愛心 × maxHP；紅=有血（支援半顆）、灰=空 ──
+  drawHearts(ctx) {
+    const p = this.player;
+    for (let i = 0; i < p.maxHP; i++) {
+      const x = 10 + i * (HEART_SIZE + HEART_GAP);
+      const filled = Math.max(0, Math.min(1, p.hp - i)); // 0 | 0.5 | 1
+      this.drawHeart(ctx, x, 10, "#4a4a4a");            // 底：灰色空心
+      if (filled > 0) this.drawHeart(ctx, x, 10, "#c8102e", filled);
+    }
+    // 魂心（藍色）接在紅心後面
+    for (let i = 0; i < Math.ceil(p.soulHearts); i++) {
+      const x = 10 + (p.maxHP + i) * (HEART_SIZE + HEART_GAP);
+      const filled = Math.max(0, Math.min(1, p.soulHearts - i));
+      this.drawHeart(ctx, x, 10, "#5a8fd1", filled);
+    }
+  }
+
+  // 愛心形狀：兩圓 + 下三角；fillRatio<1 時只畫左半
+  drawHeart(ctx, x, y, color, fillRatio = 1) {
+    const s = HEART_SIZE;
+    ctx.save();
+    if (fillRatio < 1) {
+      ctx.beginPath();
+      ctx.rect(x, y, s * fillRatio, s + 4);
+      ctx.clip();
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x + s * 0.28, y + s * 0.3, s * 0.28, 0, Math.PI * 2);
+    ctx.arc(x + s * 0.72, y + s * 0.3, s * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + s * 0.02, y + s * 0.42);
+    ctx.lineTo(x + s * 0.5, y + s);
+    ctx.lineTo(x + s * 0.98, y + s * 0.42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── EX 能量條：金色；滿時閃爍「EX!」──
+  drawEXBar(ctx) {
+    const ratio = this.player.exEnergy / EX_ENERGY_MAX;
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(8, 58, EX_BAR_W + 4, EX_BAR_H + 4);
+    ctx.fillStyle = "#3a3a3a";
+    ctx.fillRect(10, 60, EX_BAR_W, EX_BAR_H);
+    ctx.fillStyle = "#ffd75e";
+    ctx.fillRect(10, 60, EX_BAR_W * ratio, EX_BAR_H);
+
+    if (ratio >= 1 && Math.floor(this.blinkTimer / EX_BLINK_INTERVAL) % 2 === 0) {
+      ctx.fillStyle = "#ffd75e";
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("EX!", 10 + EX_BAR_W + 10, 60 + EX_BAR_H - 1);
+    }
+  }
+
+  // ── 金幣/炸彈/鑰匙：小圖示 + 數字 ──
+  drawResources(ctx) {
+    const y = 90;
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "left";
+
+    // 金幣（金色圓）
+    ctx.fillStyle = "#ffd75e";
+    ctx.beginPath();
+    ctx.arc(18, y + 8, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#b8860b";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.fillText(`× ${this.gm.coins}`, 32, y + 13);
+
+    // 炸彈（黑圓 + 紅引信）
+    ctx.fillStyle = "#1a1a1a";
+    ctx.beginPath();
+    ctx.arc(88, y + 9, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#c8102e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(88, y + 2);
+    ctx.lineTo(92, y - 3);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.fillText(`× ${this.gm.bombs}`, 102, y + 13);
+
+    // 鑰匙（金色柄 + 齒）
+    ctx.strokeStyle = "#ffd75e";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(158, y + 4, 4, 0, Math.PI * 2);
+    ctx.moveTo(158, y + 8);
+    ctx.lineTo(158, y + 16);
+    ctx.moveTo(158, y + 12);
+    ctx.lineTo(163, y + 12);
+    ctx.moveTo(158, y + 16);
+    ctx.lineTo(162, y + 16);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.fillText(`× ${this.gm.keys}`, 172, y + 13);
+  }
+
+  // ── Boss 血條：頂端中央 (200,10) 寬 500、紅色、顯示名稱 ──
+  drawBossBar(ctx) {
+    const boss = this.gm.currentRoom?.boss;
+    if (!boss || !boss.active || boss.isDying) return;
+    const x = 200, y = 10, w = 500, h = 14;
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+    ctx.fillStyle = "#3a3a3a";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = boss.phase === 2 ? "#ff5e3a" : "#c8102e";
+    ctx.fillRect(x, y, w * (boss.hp / boss.maxHP), h);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(boss.pattern.name, x + w / 2, y + h + 16);
+  }
+}
