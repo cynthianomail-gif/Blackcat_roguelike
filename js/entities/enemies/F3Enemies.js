@@ -64,6 +64,7 @@ export class StrayDog extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_straydog")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -138,6 +139,7 @@ export class Ghost extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_ghost", { alpha: 0.75 })) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     const wave = Math.sin(this.driftTimer * 3) * 3;
     ctx.save();
@@ -203,6 +205,7 @@ export class TrashcanMonster extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_trashcan")) return;
     const cx = this.x + this.w / 2;
     ctx.save();
     ctx.translate(cx, this.y);

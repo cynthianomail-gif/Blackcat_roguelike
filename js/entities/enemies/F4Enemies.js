@@ -86,6 +86,7 @@ export class GiantRat extends BaseEnemy {
       ctx.restore();
       return;
     }
+    if (this.drawSprite(ctx, "enemy_giantrat")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -142,6 +143,17 @@ export class BoxBot extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_boxbot", { noFlip: true })) {
+      // 紅色瞄準燈疊在素材上（射擊方向預警，玩家需要這資訊）
+      ctx.save();
+      ctx.fillStyle = "#c8102e";
+      ctx.beginPath();
+      ctx.arc(this.x + this.w / 2 + Math.cos(this.eyeAngle) * 8,
+              this.y + this.h / 2 + Math.sin(this.eyeAngle) * 8, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
     ctx.save();
     ctx.translate(this.x, this.y);
     // 木箱
@@ -214,6 +226,7 @@ export class EliteRat extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_eliterat", { facing: this.dashDir || this.facing || 1 })) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);

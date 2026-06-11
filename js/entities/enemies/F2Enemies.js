@@ -48,6 +48,7 @@ export class Cockroach extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_cockroach")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -119,6 +120,7 @@ export class Mouse extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_mouse")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -181,6 +183,7 @@ export class ChefBot extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_chefbot")) return;
     const cx = this.x + this.w / 2;
     ctx.save();
     ctx.translate(cx, this.y);

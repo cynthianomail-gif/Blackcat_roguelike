@@ -86,6 +86,7 @@ export class SpiritFox extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_spiritfox", { alpha: this.alpha })) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.globalAlpha = this.alpha;
@@ -158,6 +159,7 @@ export class Lantern extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_lantern")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     const sway = Math.sin(this.swing) * 4;
     ctx.save();
@@ -240,6 +242,7 @@ export class Komainu extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_komainu")) { this.drawOrbs(ctx); return; }
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -270,8 +273,12 @@ export class Komainu extends BaseEnemy {
     ctx.fillRect(this.w / 2 - 14, this.h / 2 - 14, 10, 14);
     ctx.fillRect(-this.w / 2 + 6, this.h / 2 - 14, 10, 14);
     ctx.restore();
+    this.drawOrbs(ctx);
+    this.drawHPBar(ctx);
+  }
 
-    // 旋轉石彈
+  // 旋轉石彈（sprite 與幾何路徑共用）
+  drawOrbs(ctx) {
     for (let i = 0; i < KOMAINU_ORB_COUNT; i++) {
       const pos = this.orbPos(i);
       ctx.save();
@@ -284,7 +291,6 @@ export class Komainu extends BaseEnemy {
       ctx.stroke();
       ctx.restore();
     }
-    this.drawHPBar(ctx);
   }
 }
 

@@ -5,6 +5,7 @@
 // =====================================================
 import { Entity, rectsOverlap } from "../Entity.js";
 import { EventBus } from "../../core/EventBus.js";
+import { getAsset } from "../../render/AssetLoader.js";
 import {
   CANVAS_W, WALL_THICKNESS, FLOOR_Y, ENEMY_HP_SCALE,
 } from "../../core/Constants.js";
@@ -109,6 +110,35 @@ export class BaseEnemy extends Entity {
 
   // 受傷白閃用：本幀身體顏色
   bodyColor(base) { return this.hurtFrames > 0 ? "#ffffff" : base; }
+
+  // ── Higgsfield 剪影素材（M4）──────────────────────
+  // 有圖：等比縮放塞進 w×h、底部對齊碰撞箱底、畫 HP 條後回傳 true
+  //（呼叫端直接 return）；無圖回傳 false 走幾何 fallback。
+  // 素材一律面朝左；facing=1（朝右）時水平翻面。
+  // opts: { alpha, rotate, facing, noFlip }
+  drawSprite(ctx, key, opts = {}) {
+    const img = getAsset(key);
+    if (!img) return false;
+    const fit = Math.min(this.w / img.width, this.h / img.height);
+    const dw = img.width * fit, dh = img.height * fit;
+    ctx.save();
+    if (opts.alpha !== undefined) ctx.globalAlpha = opts.alpha;
+    ctx.translate(this.x + this.w / 2, this.y + this.h);
+    if (opts.rotate) {
+      ctx.translate(0, -this.h / 2);
+      ctx.rotate(opts.rotate);
+      ctx.translate(0, this.h / 2);
+    }
+    ctx.scale(opts.noFlip ? 1 : -(opts.facing ?? this.facing ?? 1), 1);
+    // 受傷白閃；平時加淡白 rim glow——純黑剪影在背景的黑色區域才看得見
+    ctx.filter = this.hurtFrames > 0
+      ? "invert(1)"
+      : "drop-shadow(0 0 3px rgba(255,255,255,0.55))";
+    ctx.drawImage(img, -dw / 2, -dh, dw, dh);
+    ctx.restore();
+    this.drawHPBar(ctx);
+    return true;
+  }
 
   // 幾何佔位共用：身體上方的小血條
   drawHPBar(ctx) {

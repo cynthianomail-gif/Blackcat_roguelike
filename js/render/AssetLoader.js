@@ -24,6 +24,26 @@ export const ASSETS = {
   boss_gateguardian:"assets/images/sprites/boss_gateguardian.png",
   boss_chaoswanderer:"assets/images/sprites/boss_chaoswanderer.png",
 
+  // M4 ── 18 個敵人剪影（每層 3 個）
+  enemy_pigeon:    "assets/images/sprites/enemy_pigeon.png",
+  enemy_sparrow:   "assets/images/sprites/enemy_sparrow.png",
+  enemy_fatpigeon: "assets/images/sprites/enemy_fatpigeon.png",
+  enemy_cockroach: "assets/images/sprites/enemy_cockroach.png",
+  enemy_mouse:     "assets/images/sprites/enemy_mouse.png",
+  enemy_chefbot:   "assets/images/sprites/enemy_chefbot.png",
+  enemy_straydog:  "assets/images/sprites/enemy_straydog.png",
+  enemy_ghost:     "assets/images/sprites/enemy_ghost.png",
+  enemy_trashcan:  "assets/images/sprites/enemy_trashcan.png",
+  enemy_giantrat:  "assets/images/sprites/enemy_giantrat.png",
+  enemy_boxbot:    "assets/images/sprites/enemy_boxbot.png",
+  enemy_eliterat:  "assets/images/sprites/enemy_eliterat.png",
+  enemy_booksoul:  "assets/images/sprites/enemy_booksoul.png",
+  enemy_inkpus:    "assets/images/sprites/enemy_inkpus.png",
+  enemy_compass:   "assets/images/sprites/enemy_compass.png",
+  enemy_spiritfox: "assets/images/sprites/enemy_spiritfox.png",
+  enemy_lantern:   "assets/images/sprites/enemy_lantern.png",
+  enemy_komainu:   "assets/images/sprites/enemy_komainu.png",
+
   // M4 ── 六層視差背景（F7 沿用 bg_f6）
   bg_f1: "assets/images/backgrounds/bg_f1.png",
   bg_f2: "assets/images/backgrounds/bg_f2.png",

@@ -109,6 +109,7 @@ export class BookSoul extends BaseEnemy {
 
   draw(ctx) {
     if (!this.dashing) return; // 牆內隱身
+    if (this.drawSprite(ctx, "enemy_booksoul")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     const flap = Math.sin(this.flutter * 2) * 10;
     ctx.save();
@@ -177,6 +178,7 @@ export class Inkpus extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_inkpus")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -255,6 +257,7 @@ export class CompassMonster extends BaseEnemy {
   clampToRoom() { /* 圓周軌道自帶邊界 */ }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_compass", { noFlip: true, rotate: this.orbitAngle * 2 })) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);

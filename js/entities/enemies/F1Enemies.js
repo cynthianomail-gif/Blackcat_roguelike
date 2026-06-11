@@ -49,6 +49,7 @@ export class Pigeon extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_pigeon")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -139,6 +140,7 @@ export class Sparrow extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_sparrow")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -211,6 +213,7 @@ export class FatPigeon extends BaseEnemy {
   }
 
   draw(ctx) {
+    if (this.drawSprite(ctx, "enemy_fatpigeon")) return;
     const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
     const puff = Math.sin(this.wobble) * 2; // 呼吸鼓動
     ctx.save();
