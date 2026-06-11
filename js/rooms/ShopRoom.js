@@ -57,6 +57,7 @@ export class ShopItem extends Entity {
     const price = this.effectivePrice;
     if (gm.coins < price) {
       this.deniedTimer = DENIED_FRAMES;
+      EventBus.emit("shopFail", this);
       return;
     }
     gm.coins -= price;

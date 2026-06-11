@@ -20,6 +20,8 @@ import { MapDisplay } from "./ui/MapDisplay.js";
 import { ItemDisplay } from "./ui/ItemDisplay.js";
 import { Screens } from "./ui/Screens.js";
 import { SaveManager } from "./core/SaveManager.js";
+import { Audio } from "./audio/AudioManager.js";
+import { wireAudioEvents } from "./audio/AudioEvents.js";
 import { generateFloor } from "./world/RoomGenerator.js";
 import {
   CANVAS_W, FLOOR_Y, PLAYER_H,
@@ -34,6 +36,21 @@ const camera = new Camera();
 const state = new StateManager();
 const input = new Input();
 const gm = GameManager.getInstance();
+
+// ── 音訊系統（音訊規格書 Task Audio-1/2）──
+// AudioContext 須在使用者首次互動後初始化（瀏覽器自動播放政策）
+wireAudioEvents(state, STATES);
+function initAudioOnce() {
+  Audio.init();
+  // 選單 BGM 先前被 autoplay policy 擋下 → 互動後補播
+  if (state.is(STATES.MAIN_MENU)) Audio.onMainMenu();
+}
+document.addEventListener("keydown", initAudioOnce, { once: true });
+document.addEventListener("click", initAudioOnce, { once: true });
+// M 鍵：靜音/取消靜音
+document.addEventListener("keydown", (e) => {
+  if (e.key === "m" || e.key === "M") Audio.toggleMute();
+});
 
 // ── 玩家 + 子彈池 ──
 const bulletPool = new BulletPool();
@@ -111,7 +128,10 @@ function update(dt) {
 
   // ── 全螢幕狀態閘門：選單/死亡/通關/暫停時凍結遊戲 ──
   if (state.is(STATES.MAIN_MENU)) {
-    if (input.confirmPressed) state.change(STATES.EXPLORING);
+    if (input.confirmPressed) {
+      state.change(STATES.EXPLORING);
+      EventBus.emit("floorChanged", gm.floor); // 開局播放 F1 BGM
+    }
     input.endFrame();
     return;
   }
@@ -221,6 +241,7 @@ EventBus.on("requestTeleport", ({ x, y }) => {
   player.vy = 0;
   bulletPool.clear();
   syncSceneToRoom();
+  EventBus.emit("roomChanged", { room: r, dir: null }); // 傳送也算換房（音訊/每房重置）
 });
 
 // 下一層：F1-F6 → F7（最終 Boss 層）→ 通關 RUN_CLEAR
@@ -233,6 +254,7 @@ function goToNextFloor() {
     return;
   }
   gm.floor = next;
+  EventBus.emit("floorChanged", next);
   floor = generateFloor(next, gm.seed);
   floor.currentRoom.enter();
   gm.currentFloor = floor;
@@ -247,7 +269,7 @@ function goToNextFloor() {
 }
 
 // 驗證/除錯用全局掛載
-window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, familiarManager, fps: 0, STATES };
+window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, familiarManager, audio: Audio, fps: 0, STATES };
 // 測試工具：直接跳到指定格子的房間
 window.game.gotoRoom = (x, y) => {
   const r = floor.roomAt(x, y);
@@ -255,6 +277,7 @@ window.game.gotoRoom = (x, y) => {
   floor.currentPos = { x, y };
   r.enter();
   syncSceneToRoom();
+  EventBus.emit("roomChanged", { room: r, dir: null });
   return r;
 };
 Object.defineProperty(window.game, "floor", { get: () => floor });
