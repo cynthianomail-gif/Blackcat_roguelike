@@ -10,6 +10,8 @@ import { Input } from "./core/Input.js";
 import { EventBus } from "./core/EventBus.js";
 import { Player } from "./entities/Player.js";
 import { BulletPool } from "./entities/BulletPool.js";
+import { ItemManager } from "./items/ItemManager.js";
+import { SynergyAlert } from "./ui/SynergyAlert.js";
 import { generateFloor } from "./world/RoomGenerator.js";
 import { CANVAS_W, FLOOR_Y, PLAYER_H } from "./core/Constants.js";
 
@@ -27,6 +29,11 @@ const bulletPool = new BulletPool();
 const player = new Player(CANVAS_W / 2, FLOOR_Y - PLAYER_H, bulletPool);
 gm.player = player;
 
+// ── 道具系統 ──
+const itemManager = new ItemManager(player, gm);
+gm.itemManager = itemManager;
+const synergyAlert = new SynergyAlert();
+
 // ── 程序生成樓層 ──
 let floor = generateFloor(1, gm.seed);
 floor.currentRoom.enter();
@@ -36,6 +43,7 @@ gm.currentRoom = floor.currentRoom;
 renderer.scene.camera = camera;
 renderer.scene.player = player;
 renderer.scene.bullets = bulletPool.bullets;
+renderer.scene.synergyAlert = synergyAlert;
 
 function syncSceneToRoom() {
   const room = floor.currentRoom;
@@ -92,6 +100,7 @@ function update(dt) {
 
   const enemies = renderer.scene.enemies || [];
   bulletPool.update(dt, enemies.filter(e => e.active), player);
+  synergyAlert.update(dt);
   input.endFrame();
 }
 
@@ -99,7 +108,7 @@ function update(dt) {
 EventBus.on("enemyDied", (e) => console.log("enemyDied:", e.constructor.name));
 
 // 驗證/除錯用全局掛載
-window.game = { renderer, camera, state, gm, input, player, bulletPool, fps: 0, STATES };
+window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, fps: 0, STATES };
 // 測試工具：直接跳到指定格子的房間
 window.game.gotoRoom = (x, y) => {
   const r = floor.roomAt(x, y);

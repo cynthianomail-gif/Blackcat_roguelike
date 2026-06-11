@@ -58,7 +58,12 @@ export class Room {
 
   update(dt, player) {
     this.enemies.forEach(e => e.active && e.update(dt, player));
-    this.items.forEach(i => i.update?.(dt, player));
+
+    // 地上道具（拾取後就地移除）
+    for (let i = this.items.length - 1; i >= 0; i--) {
+      this.items[i].update?.(dt, player);
+      if (this.items[i].active === false) this.items.splice(i, 1);
+    }
 
     // 敵人投射物（就地清除，保持陣列引用）
     for (let i = this.enemyBullets.length - 1; i >= 0; i--) {

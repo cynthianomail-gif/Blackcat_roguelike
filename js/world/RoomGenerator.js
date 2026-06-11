@@ -7,6 +7,9 @@ import { SeededRandom } from "../core/SeededRandom.js";
 import { Room } from "./Room.js";
 import { Floor } from "./Floor.js";
 import { spawnF1Enemies } from "../entities/enemies/F1Enemies.js";
+import { ItemPickup } from "../items/ItemPickup.js";
+import { pickItemForFloor } from "../items/ItemDatabase.js";
+import { CANVAS_W, FLOOR_Y } from "../core/Constants.js";
 import {
   GRID_W, GRID_H, MIN_ROOMS, MAX_ROOMS, ROOM_TYPES,
 } from "../core/Constants.js";
@@ -123,6 +126,14 @@ export function generateFloor(floorNum, seed) {
   for (const room of rooms) {
     if (room.type === ROOM_TYPES.NORMAL && !room.isStart) {
       spawnF1Enemies(room, rng);
+    }
+  }
+
+  // ── Step 6: 道具房放免費道具（房間中央基座）──
+  for (const room of rooms) {
+    if (room.type === ROOM_TYPES.TREASURE) {
+      const item = pickItemForFloor(rng, floorNum);
+      if (item) room.items.push(new ItemPickup(item.id, CANVAS_W / 2, FLOOR_Y - 50));
     }
   }
 

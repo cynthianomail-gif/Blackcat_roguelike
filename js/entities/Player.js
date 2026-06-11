@@ -42,6 +42,8 @@ export class Player extends Entity {
     this.bulletHoming = 0;                  // homingStrength
     this.bulletSizeMulti = 1;
     this.bulletKnockback = 0;
+    this.bulletBounces = 0;                 // 彈力毛球：撞牆反彈次數
+    this.crossFireChance = 0;               // 十字貓掌：四向齊射機率
     this.luck = 0;
     this.damageBonus = 0;                   // 戰鬥本能等臨時加成
 
@@ -150,28 +152,40 @@ export class Player extends Entity {
     const count = isEX ? 1 : this.bulletCount;
     const spreadRad = (this.spreadAngle * Math.PI) / 180;
     const baseAngle = this.facing === 1 ? 0 : Math.PI;
-    const mouthX = this.facing === 1 ? this.x + this.w : this.x;
-    const mouthY = this.y + 12;
 
     for (let i = 0; i < count; i++) {
       // 多顆時以正前方為中心扇形展開
       const offset = count > 1 ? (i - (count - 1) / 2) * spreadRad : 0;
-      const angle = baseAngle + offset;
-      const speed = isEX ? EX_BULLET_SPEED : this.bulletSpeed;
-      const size = isEX ? { w: EX_BULLET_W, h: EX_BULLET_H }
-                        : { w: PLAYER_BULLET_W, h: PLAYER_BULLET_H };
-      const bullet = this.bulletPool.spawn({
-        x: mouthX - size.w / 2, y: mouthY - size.h / 2,
-        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-        damage: isEX ? this.totalDamage * EX_BULLET_DAMAGE_MULT : this.totalDamage,
-        range: isEX ? 9999 : this.bulletRange,
-        w: size.w, h: size.h,
-        isEX, piercing: this.bulletPiercing,
-      });
-      bullet.homingStrength = this.bulletHoming;
-      bullet.sizeMulti = this.bulletSizeMulti;
-      bullet.knockback = this.bulletKnockback;
+      this.spawnBullet(baseAngle + offset, isEX);
     }
+
+    // 十字貓掌：機率向其餘三個方向齊射
+    if (!isEX && this.crossFireChance > 0 && Math.random() < this.crossFireChance) {
+      for (const extra of [Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+        this.spawnBullet(baseAngle + extra, false);
+      }
+    }
+  }
+
+  spawnBullet(angle, isEX) {
+    const mouthX = this.facing === 1 ? this.x + this.w : this.x;
+    const mouthY = this.y + 12;
+    const speed = isEX ? EX_BULLET_SPEED : this.bulletSpeed;
+    const size = isEX ? { w: EX_BULLET_W, h: EX_BULLET_H }
+                      : { w: PLAYER_BULLET_W, h: PLAYER_BULLET_H };
+    const bullet = this.bulletPool.spawn({
+      x: mouthX - size.w / 2, y: mouthY - size.h / 2,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      damage: isEX ? this.totalDamage * EX_BULLET_DAMAGE_MULT : this.totalDamage,
+      range: isEX ? 9999 : this.bulletRange,
+      w: size.w, h: size.h,
+      isEX, piercing: this.bulletPiercing,
+    });
+    bullet.homingStrength = this.bulletHoming;
+    bullet.sizeMulti = this.bulletSizeMulti;
+    bullet.knockback = this.bulletKnockback;
+    bullet.maxBounces = this.bulletBounces;
+    return bullet;
   }
 
   // 命中敵人時呼叫（碰撞系統觸發）
