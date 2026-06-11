@@ -3,6 +3,7 @@
 // =====================================================
 import { Renderer } from "./render/Renderer.js";
 import { Camera } from "./render/Camera.js";
+import { ParallaxBackground } from "./render/Background.js";
 import { loadAllAssets } from "./render/AssetLoader.js";
 import { GameManager } from "./core/GameManager.js";
 import { StateManager, STATES } from "./core/StateManager.js";
@@ -77,6 +78,11 @@ let floor = generateFloor(1, gm.seed);
 floor.currentRoom.enter();
 gm.currentFloor = floor;
 gm.currentRoom = floor.currentRoom;
+
+// ── 視差背景（M4）：依樓層顯示 P2 背景圖，無圖走幾何 fallback ──
+const background = new ParallaxBackground();
+background.floor = floor;
+renderer.scene.background = background;
 
 renderer.scene.camera = camera;
 renderer.scene.player = player;
@@ -259,6 +265,7 @@ function goToNextFloor() {
   floor.currentRoom.enter();
   gm.currentFloor = floor;
   mapDisplay.floor = floor;
+  background.floor = floor;
   player.x = CANVAS_W / 2 - player.w / 2;
   player.y = FLOOR_Y - PLAYER_H;
   player.vy = 0;

@@ -88,6 +88,7 @@ export const FEATHERTOP = {
 
 export const ANTENNA = {
   name: "天線怪", nameEn: "Antenna Fiend", hp: 220, w: 90, h: 110,
+  sprite: "boss_antenna",
   phase1: {
     interval: 100,
     fire(boss, player, pool) {
@@ -127,6 +128,7 @@ export const ROACH_KING = {
 
 export const POT_MONSTER = {
   name: "鍋子怪", nameEn: "Pot Fiend", hp: 300, w: 100, h: 100,
+  sprite: "boss_potfiend",
   phase1: {
     interval: 120,
     fire(boss, player, pool) {
@@ -145,6 +147,7 @@ export const POT_MONSTER = {
 // ── F3 ───────────────────────────────────────────────
 export const ALLEY_DOG_KING = {
   name: "巷霸犬王", nameEn: "Alley Dog King", hp: 360, w: 130, h: 90,
+  sprite: "boss_dogfather",
   phase1: {
     interval: 100,
     fire(boss, player, pool) {
@@ -164,6 +167,7 @@ export const ALLEY_DOG_KING = {
 
 export const RAIN_CAT = {
   name: "雨夜妖貓", nameEn: "Rain Cat", hp: 380, w: 90, h: 100,
+  sprite: "boss_raincat",
   phase1: {
     interval: 90,
     fire(boss, player, pool) {
@@ -206,6 +210,7 @@ export const RAT_KING = {
 
 export const ROLLER = {
   name: "機械壓路機", nameEn: "Steamroller", hp: 470, w: 150, h: 80,
+  sprite: "boss_steamroller",
   phase1: {
     interval: 110,
     fire(boss, player, pool) {
@@ -232,6 +237,7 @@ export const ROLLER = {
 // ── F5 ───────────────────────────────────────────────
 export const TOME_GOD = {
   name: "古籍魔神", nameEn: "Tome God", hp: 550, w: 110, h: 120,
+  sprite: "boss_tomegod",
   phase1: {
     interval: 95,
     fire(boss, player, pool) {
@@ -251,6 +257,7 @@ export const TOME_GOD = {
 
 export const LIBRARIAN = {
   name: "圖書管理員", nameEn: "The Librarian", hp: 570, w: 90, h: 130,
+  sprite: "boss_librarian",
   phase1: {
     interval: 90,
     fire(boss, player, pool) {
@@ -289,6 +296,7 @@ export const NINETAIL = {
 
 export const GATE_GUARDIAN = {
   name: "守門神", nameEn: "Gate Guardian", hp: 680, w: 140, h: 130,
+  sprite: "boss_gateguardian",
   phase1: {
     interval: 105,
     fire(boss, player, pool) {
@@ -312,6 +320,7 @@ const ALL_PATTERNS = [
 
 export const CHAOS_GOD = {
   name: "混沌流浪之神", nameEn: "Chaos Wanderer", hp: 900, w: 150, h: 140,
+  sprite: "boss_chaoswanderer",
   phase1: {
     interval: 90,
     fire(boss, player, pool) {

@@ -31,9 +31,8 @@ export class Renderer {
     s.camera?.apply(ctx);
 
     try {
-      // 3. 視差背景層
-      if (s.background?.draw) s.background.draw(ctx);
-      else this.drawFallbackBackground(ctx);
+      // 3. 視差背景層（draw 回傳 false = 素材缺失 → 幾何 fallback）
+      if (!s.background?.draw?.(ctx)) this.drawFallbackBackground(ctx);
 
       // 4. 地板磚塊
       s.room?.drawFloor?.(ctx);
