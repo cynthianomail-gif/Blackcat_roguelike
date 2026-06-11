@@ -63,7 +63,7 @@ export class BossBullet extends Entity {
     // 羽毛形：白色橢圓 + 黑描邊 + 中軸線
     ctx.fillStyle = "#f4f4f4";
     ctx.strokeStyle = "#1a1a1a";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 3; // 粗黑邊：亮彩背景上靠黑邊讀、黑前景上靠亮核心讀
     ctx.beginPath();
     ctx.ellipse(0, 0, 9, 4.5, 0, 0, Math.PI * 2);
     ctx.fill();

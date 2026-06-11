@@ -132,7 +132,8 @@ export class Room {
 
   // ── 渲染（依 Renderer 管線分段呼叫）─────────────────
   drawFloor(ctx) {
-    ctx.fillStyle = "#2a2a2a";
+    // BADLAND 式：地板屬於前景平面 → 純黑；背景整張亮彩發光
+    ctx.fillStyle = "#101014";
     ctx.fillRect(0, FLOOR_Y, CANVAS_W, CANVAS_H - FLOOR_Y);
     ctx.strokeStyle = "rgba(255,255,255,0.12)";
     ctx.lineWidth = 1;
@@ -151,7 +152,7 @@ export class Room {
   }
 
   drawWalls(ctx) {
-    ctx.fillStyle = "#1a1a1a";
+    ctx.fillStyle = "#101014"; // 前景平面同色（BADLAND 式）
     ctx.fillRect(0, 0, WALL_THICKNESS, CANVAS_H);                       // 左牆
     ctx.fillRect(CANVAS_W - WALL_THICKNESS, 0, WALL_THICKNESS, CANVAS_H); // 右牆
     ctx.fillRect(0, 0, CANVAS_W, CEILING_Y);                            // 天花板

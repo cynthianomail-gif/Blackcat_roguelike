@@ -72,7 +72,7 @@ export class EnemyBullet extends Entity {
     ctx.save();
     ctx.fillStyle = "#e8e8e8";
     ctx.strokeStyle = "#1a1a1a";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 3; // 粗黑邊：亮彩背景（BADLAND 式）上靠黑邊讀、黑前景上靠亮核心讀
     ctx.beginPath();
     ctx.arc(this.x + this.r, this.y + this.r, this.r, 0, Math.PI * 2);
     ctx.fill();

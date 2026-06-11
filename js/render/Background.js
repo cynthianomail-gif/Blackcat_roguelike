@@ -45,10 +45,11 @@ export class ParallaxBackground {
     const dy = -(dh - CANVAS_H) * this.oy;
     ctx.drawImage(img, dx, dy, dw, dh);
 
-    // 底部暗角：讓地板磚與實體輪廓保持可讀
+    // BADLAND 式：背景必須保持明亮（黑只屬於前景），
+    // 暗角只留極淡 vignette 增加層次；壓深會讓黑剪影重新融進背景
     const veil = ctx.createLinearGradient(0, CANVAS_H * 0.45, 0, CANVAS_H);
     veil.addColorStop(0, "rgba(0,0,0,0)");
-    veil.addColorStop(1, floorNum >= 7 ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.28)");
+    veil.addColorStop(1, floorNum >= 7 ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.08)");
     ctx.fillStyle = veil;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     return true;

@@ -130,10 +130,11 @@ export class BaseEnemy extends Entity {
       ctx.translate(0, this.h / 2);
     }
     ctx.scale(opts.noFlip ? 1 : -(opts.facing ?? this.facing ?? 1), 1);
-    // 受傷白閃；平時加淡白 rim glow——純黑剪影在背景的黑色區域才看得見
+    // 受傷白閃；平時留極淡 rim glow（亮彩背景下黑剪影本身可讀，
+    // glow 只為腳部與前景黑地板交界處保留一點分離度）
     ctx.filter = this.hurtFrames > 0
       ? "invert(1)"
-      : "drop-shadow(0 0 3px rgba(255,255,255,0.55))";
+      : "drop-shadow(0 0 3px rgba(255,255,255,0.30))";
     ctx.drawImage(img, -dw / 2, -dh, dw, dh);
     ctx.restore();
     this.drawHPBar(ctx);
