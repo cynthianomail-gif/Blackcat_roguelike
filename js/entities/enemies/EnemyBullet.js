@@ -5,27 +5,55 @@
 // 由 Room.enemyBullets 統一更新與繪製
 // =====================================================
 import { Entity, rectsOverlap } from "../Entity.js";
-import { CANVAS_W, WALL_THICKNESS, FLOOR_Y } from "../../core/Constants.js";
+import { CANVAS_W, CANVAS_H, WALL_THICKNESS, FLOOR_Y } from "../../core/Constants.js";
 
 const CEILING_Y = WALL_THICKNESS;
 const BOMB_GRAVITY = 0.3;        // 炸彈重力（比玩家輕，拋物線較緩）
 const BOMB_EXPLOSION_FRAMES = 14; // 爆炸特效持續幀數
 
 export class EnemyBullet extends Entity {
-  constructor(x, y, vx, vy, damage, r = 5) {
+  // opts: homing（每幀轉向 rad，BoxBot 追蹤彈）/ ignoreWalls（Ghost 穿牆彈）/ poison
+  constructor(x, y, vx, vy, damage, r = 5, opts = {}) {
     super(x - r, y - r, r * 2, r * 2);
     this.vx = vx; this.vy = vy;
     this.damage = damage;
     this.r = r;
+    this.homing = opts.homing || 0;
+    this.ignoreWalls = opts.ignoreWalls || false;
+    this.poison = opts.poison || null; // { dmg, dur }
+    this.life = opts.life ?? 600;      // 穿牆彈防永生
   }
 
   update(dt, player) {
     if (!this.active) return;
+
+    // 追蹤：緩慢轉向玩家
+    if (this.homing > 0 && player?.active) {
+      const speed = Math.hypot(this.vx, this.vy);
+      const cur = Math.atan2(this.vy, this.vx);
+      const target = Math.atan2(
+        (player.y + player.h / 2) - (this.y + this.h / 2),
+        (player.x + player.w / 2) - (this.x + this.w / 2));
+      let diff = target - cur;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      const turn = Math.max(-this.homing * dt, Math.min(this.homing * dt, diff));
+      this.vx = Math.cos(cur + turn) * speed;
+      this.vy = Math.sin(cur + turn) * speed;
+    }
+
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+    this.life -= dt;
+    if (this.life <= 0) { this.active = false; return; }
 
-    // 撞牆/地板/天花板銷毀
-    if (this.x <= WALL_THICKNESS || this.x + this.w >= CANVAS_W - WALL_THICKNESS ||
+    // 撞牆/地板/天花板銷毀（穿牆彈僅在飛出畫面外時銷毀）
+    if (this.ignoreWalls) {
+      if (this.x < -60 || this.x > CANVAS_W + 60 || this.y < -60 || this.y > CANVAS_H + 60) {
+        this.active = false;
+        return;
+      }
+    } else if (this.x <= WALL_THICKNESS || this.x + this.w >= CANVAS_W - WALL_THICKNESS ||
         this.y <= CEILING_Y || this.y + this.h >= FLOOR_Y) {
       this.active = false;
       return;
@@ -33,7 +61,8 @@ export class EnemyBullet extends Entity {
 
     // 命中玩家（無敵幀由 Player.takeDamage 處理；命中即銷毀）
     if (player?.active && rectsOverlap(this.hitbox, player.hitbox)) {
-      player.takeDamage(this.damage);
+      const hit = player.takeDamage(this.damage);
+      if (hit && this.poison) player.applyPoison(this.poison.dmg, this.poison.dur);
       this.active = false;
     }
   }

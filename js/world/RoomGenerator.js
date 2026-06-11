@@ -7,6 +7,11 @@ import { SeededRandom } from "../core/SeededRandom.js";
 import { Room } from "./Room.js";
 import { Floor } from "./Floor.js";
 import { spawnF1Enemies } from "../entities/enemies/F1Enemies.js";
+import { spawnF2Enemies } from "../entities/enemies/F2Enemies.js";
+import { spawnF3Enemies } from "../entities/enemies/F3Enemies.js";
+import { spawnF4Enemies } from "../entities/enemies/F4Enemies.js";
+import { spawnF5Enemies } from "../entities/enemies/F5Enemies.js";
+import { spawnF6Enemies } from "../entities/enemies/F6Enemies.js";
 import { BossController } from "../entities/boss/BossController.js";
 import { BOSS_BY_FLOOR } from "../entities/boss/BossPattern.js";
 import { setupTreasureRoom } from "../rooms/TreasureRoom.js";
@@ -126,10 +131,16 @@ export function generateFloor(floorNum, seed) {
     }
   }
 
-  // ── Step 5: 生成敵人（NORMAL 房，起始房除外；M1 全部使用 F1 敵人）──
+  // ── Step 5: 生成敵人（NORMAL 房，起始房除外；依樓層敵人表）──
+  const ENEMY_SPAWNERS = {
+    1: spawnF1Enemies, 2: spawnF2Enemies, 3: spawnF3Enemies,
+    4: spawnF4Enemies, 5: spawnF5Enemies, 6: spawnF6Enemies,
+    7: spawnF6Enemies, // 最終層沿用 F6 敵人
+  };
+  const spawnEnemies = ENEMY_SPAWNERS[floorNum] || spawnF1Enemies;
   for (const room of rooms) {
     if (room.type === ROOM_TYPES.NORMAL && !room.isStart) {
-      spawnF1Enemies(room, rng);
+      spawnEnemies(room, rng);
     }
   }
 
@@ -143,10 +154,11 @@ export function generateFloor(floorNum, seed) {
     }
   }
 
-  // ── Step 7: Boss 房放 Boss ──
+  // ── Step 7: Boss 房放 Boss（每層 A/B 由種子抽選）──
   for (const room of rooms) {
     if (room.type === ROOM_TYPES.BOSS) {
-      const pattern = BOSS_BY_FLOOR[floorNum] || BOSS_BY_FLOOR[1];
+      const candidates = BOSS_BY_FLOOR[floorNum] || BOSS_BY_FLOOR[1];
+      const pattern = candidates[rng.int(0, candidates.length - 1)];
       const boss = new BossController(pattern, floorNum);
       boss.room = room;
       room.boss = boss;

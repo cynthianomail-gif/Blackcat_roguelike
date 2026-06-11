@@ -119,7 +119,10 @@ function update(dt) {
 
   if (floorTransitionTimer >= 0) {
     floorTransitionTimer -= dt;
-    if (floorTransitionTimer < 0) state.change(STATES.FLOOR_TRANSITION);
+    if (floorTransitionTimer < 0) {
+      state.change(STATES.FLOOR_TRANSITION);
+      goToNextFloor();
+    }
   }
 
   input.endFrame();
@@ -131,6 +134,27 @@ EventBus.on("enemyDied", (e) => console.log("enemyDied:", e.constructor.name));
 // Boss 死亡 → 0.8 秒（48 幀）後進入 FLOOR_TRANSITION
 let floorTransitionTimer = -1;
 EventBus.on("bossDied", () => { floorTransitionTimer = 48; });
+
+// 下一層：F1-F6 → F7（最終 Boss 層）→ 通關 RUN_CLEAR
+const FINAL_FLOOR = 7;
+function goToNextFloor() {
+  const next = floor.floorNum + 1;
+  if (next > FINAL_FLOOR) {
+    state.change(STATES.RUN_CLEAR);
+    return;
+  }
+  gm.floor = next;
+  floor = generateFloor(next, gm.seed);
+  floor.currentRoom.enter();
+  gm.currentFloor = floor;
+  mapDisplay.floor = floor;
+  player.x = CANVAS_W / 2 - player.w / 2;
+  player.y = FLOOR_Y - PLAYER_H;
+  player.vy = 0;
+  bulletPool.clear();
+  syncSceneToRoom();
+  state.change(STATES.EXPLORING);
+}
 
 // 驗證/除錯用全局掛載
 window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, fps: 0, STATES };

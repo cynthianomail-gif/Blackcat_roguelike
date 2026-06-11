@@ -60,6 +60,11 @@ export class Player extends Entity {
     this.dashCooldown = 0;
     this.invincibleFrames = 0;
 
+    // ── 狀態異常 ──
+    this.poisonFrames = 0;   // 中毒剩餘幀（每 60f 扣 0.5，無視無敵幀）
+    this.poisonTick = 0;
+    this.slowFrames = 0;     // 減速剩餘幀（墨水區：速度 ×0.55）
+
     // ── 動畫狀態 ──
     this.bobbingTimer = 0;
     this.spriteOffsetY = 0;
@@ -82,13 +87,27 @@ export class Player extends Entity {
       EventBus.emit("playerDash", this);
     }
 
+    // ── 狀態異常 ──
+    if (this.slowFrames > 0) this.slowFrames -= dt;
+    if (this.poisonFrames > 0) {
+      this.poisonFrames -= dt;
+      this.poisonTick += dt;
+      if (this.poisonTick >= 60) { // 每秒扣半顆心（無視無敵幀）
+        this.poisonTick = 0;
+        this.hp -= 0.5;
+        EventBus.emit("playerPoisonTick", this);
+        if (this.hp <= 0) this.die();
+      }
+    }
+
     // ── 水平移動 ──
     const ax = input.axisX;
+    const effSpeed = this.slowFrames > 0 ? this.speed * 0.55 : this.speed;
     if (this.dashFrames > 0) {
       this.dashFrames -= dt;
       this.x += this.facing * DASH_SPEED * dt;
     } else {
-      this.x += ax * this.speed * dt;
+      this.x += ax * effSpeed * dt;
       if (ax !== 0) this.facing = ax > 0 ? 1 : -1;
     }
 
@@ -205,6 +224,14 @@ export class Player extends Entity {
     EventBus.emit("playerHurt", { player: this, damage: dmg });
     if (this.hp <= 0) this.die();
     return true;
+  }
+
+  applyPoison(dmg, durFrames) {
+    this.poisonFrames = Math.max(this.poisonFrames, durFrames);
+  }
+
+  applySlow(durFrames) {
+    this.slowFrames = Math.max(this.slowFrames, durFrames);
   }
 
   heal(amount) {

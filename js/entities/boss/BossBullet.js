@@ -17,10 +17,11 @@ export class BossBullet extends Entity {
     this.spawnOrder = 0;
   }
 
-  spawn({ x, y, vx, vy, damage = 1 }) {
+  spawn({ x, y, vx, vy, damage = 1, bounces = 0 }) {
     this.x = x - this.w / 2; this.y = y - this.h / 2;
     this.vx = vx; this.vy = vy;
     this.damage = damage;
+    this.bounces = bounces; // 牆壁彈射次數（鼠王/壓路機彈幕）
     this.active = true;
   }
 
@@ -29,10 +30,21 @@ export class BossBullet extends Entity {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    if (this.x <= WALL_THICKNESS || this.x + this.w >= CANVAS_W - WALL_THICKNESS ||
-        this.y <= CEILING_Y || this.y + this.h >= FLOOR_Y) {
-      this.active = false;
-      return;
+    let reflectX = false, reflectY = false;
+    if (this.x <= WALL_THICKNESS) { reflectX = true; this.x = WALL_THICKNESS; }
+    if (this.x + this.w >= CANVAS_W - WALL_THICKNESS) { reflectX = true; this.x = CANVAS_W - WALL_THICKNESS - this.w; }
+    if (this.y <= CEILING_Y) { reflectY = true; this.y = CEILING_Y; }
+    if (this.y + this.h >= FLOOR_Y) { reflectY = true; this.y = FLOOR_Y - this.h; }
+
+    if (reflectX || reflectY) {
+      if (this.bounces > 0) {
+        this.bounces--;
+        if (reflectX) this.vx = -this.vx;
+        if (reflectY) this.vy = -this.vy;
+      } else {
+        this.active = false;
+        return;
+      }
     }
 
     if (player?.active && rectsOverlap(this.hitbox, player.hitbox)) {
