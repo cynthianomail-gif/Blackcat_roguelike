@@ -7,11 +7,12 @@ import { SeededRandom } from "../core/SeededRandom.js";
 import { Room } from "./Room.js";
 import { Floor } from "./Floor.js";
 import { spawnF1Enemies } from "../entities/enemies/F1Enemies.js";
-import { ItemPickup } from "../items/ItemPickup.js";
-import { pickItemForFloor } from "../items/ItemDatabase.js";
 import { BossController } from "../entities/boss/BossController.js";
 import { BOSS_BY_FLOOR } from "../entities/boss/BossPattern.js";
-import { CANVAS_W, FLOOR_Y } from "../core/Constants.js";
+import { setupTreasureRoom } from "../rooms/TreasureRoom.js";
+import { setupShopRoom } from "../rooms/ShopRoom.js";
+import { setupSecretRoom } from "../rooms/SecretRoom.js";
+import { setupDevilRoom } from "../rooms/DevilRoom.js";
 import {
   GRID_W, GRID_H, MIN_ROOMS, MAX_ROOMS, ROOM_TYPES,
 } from "../core/Constants.js";
@@ -90,6 +91,7 @@ export function generateFloor(floorNum, seed) {
 
   takeRoomFor(ROOM_TYPES.TREASURE);
   takeRoomFor(ROOM_TYPES.SHOP);
+  if (rng.float() < 0.3) takeRoomFor(ROOM_TYPES.DEVIL); // 魔鬼房 0-1（30%）
 
   // SECRET：60% 機率，與某普通房相鄰的空格（DEMO：先生成房間，門待炸彈系統）
   if (rng.float() < 0.6) {
@@ -131,11 +133,13 @@ export function generateFloor(floorNum, seed) {
     }
   }
 
-  // ── Step 6: 道具房放免費道具（房間中央基座）──
+  // ── Step 6: 特殊房間佈置（js/rooms/ 各模組）──
   for (const room of rooms) {
-    if (room.type === ROOM_TYPES.TREASURE) {
-      const item = pickItemForFloor(rng, floorNum);
-      if (item) room.items.push(new ItemPickup(item.id, CANVAS_W / 2, FLOOR_Y - 50));
+    switch (room.type) {
+      case ROOM_TYPES.TREASURE: setupTreasureRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.SHOP:     setupShopRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.SECRET:   setupSecretRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.DEVIL:    setupDevilRoom(room, rng, floorNum); break;
     }
   }
 

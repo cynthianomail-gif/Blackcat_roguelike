@@ -56,12 +56,12 @@ export class Room {
 
   isBattleOver() { return this.enemies.every(e => !e.active); }
 
-  update(dt, player) {
+  update(dt, player, input = null) {
     this.enemies.forEach(e => e.active && e.update(dt, player));
 
-    // 地上道具（拾取後就地移除）
+    // 地上道具/商品（拾取或購買後就地移除；input 供 E 鍵互動）
     for (let i = this.items.length - 1; i >= 0; i--) {
-      this.items[i].update?.(dt, player);
+      this.items[i].update?.(dt, player, input);
       if (this.items[i].active === false) this.items.splice(i, 1);
     }
 

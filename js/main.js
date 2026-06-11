@@ -97,7 +97,7 @@ function update(dt) {
 
   const room = floor.currentRoom;
   if (room) {
-    room.update(dt, player);
+    room.update(dt, player, input);
     room.handleBulletCollisions(bulletPool.bullets);
 
     // 門觸發 → 房間切換
