@@ -9,6 +9,7 @@ import { BaseEnemy } from "../enemies/BaseEnemy.js";
 import { BossBulletPool } from "./BossBullet.js";
 import { EventBus } from "../../core/EventBus.js";
 import { Coin } from "../../items/Coin.js";
+import { getAsset } from "../../render/AssetLoader.js";
 import {
   CANVAS_W, WALL_THICKNESS,
   BOSS_PHASE2_THRESHOLD, BOSS_HIT_FLASH_FRAMES, BOSS_DEATH_DURATION,
@@ -123,6 +124,20 @@ export class BossController extends BaseEnemy {
     ctx.scale(scale, scale);
 
     const w = this.w, h = this.h;
+
+    // ── Higgsfield 剪影素材（有圖用圖；受傷白閃用 invert）──
+    const img = this.pattern.sprite ? getAsset(this.pattern.sprite) : null;
+    if (img) {
+      // 等比縮放塞進 w×h 範圍，底部對齊碰撞箱底
+      const fit = Math.min(w / img.width, h / img.height);
+      const dw = img.width * fit, dh = img.height * fit;
+      if (this.hurtFrames > 0) ctx.filter = "invert(1)";
+      ctx.drawImage(img, -dw / 2, h / 2 - dh, dw, dh);
+      ctx.filter = "none";
+      ctx.restore();
+      return;
+    }
+
     const body = this.hurtFrames > 0 ? "#ffffff" : "#4a525a";
 
     // 巨大鴿身

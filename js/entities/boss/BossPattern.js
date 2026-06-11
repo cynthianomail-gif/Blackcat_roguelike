@@ -68,6 +68,7 @@ function summon(boss, EnemyClass, n = 2, cap = 5) {
 // ── F1 ───────────────────────────────────────────────
 export const FEATHERTOP = {
   name: "鴿王羽毛", nameEn: "Feathertop", hp: 200, w: 110, h: 96,
+  sprite: "boss_feathertop",
   phase1: {
     interval: 120,
     fire(boss, player, pool) {
@@ -107,6 +108,7 @@ export const ANTENNA = {
 // ── F2 ───────────────────────────────────────────────
 export const ROACH_KING = {
   name: "蟑螂王", nameEn: "Roach King", hp: 280, w: 120, h: 90,
+  sprite: "boss_roachmaster",
   phase1: {
     interval: 110,
     fire(boss, player, pool) {
@@ -180,6 +182,7 @@ export const RAIN_CAT = {
 // ── F4 ───────────────────────────────────────────────
 export const RAT_KING = {
   name: "倉庫鼠王", nameEn: "Rat King", hp: 450, w: 130, h: 100,
+  sprite: "boss_ratking",
   phase1: {
     interval: 100,
     fire(boss, player, pool) {
@@ -266,6 +269,7 @@ export const LIBRARIAN = {
 // ── F6 ───────────────────────────────────────────────
 export const NINETAIL = {
   name: "九尾靈狐", nameEn: "Ninetail", hp: 650, w: 120, h: 110,
+  sprite: "boss_ninetails",
   phase1: {
     interval: 90,
     fire(boss, player, pool) {

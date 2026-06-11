@@ -5,20 +5,37 @@
 // =====================================================
 
 export const ASSETS = {
-  // Higgsfield 素材就位後在此登錄（M3 里程碑）
-  // player_idle: "assets/images/player_idle.png",
-  // player_jump: "assets/images/player_jump.png",
-  // boss_f1a:    "assets/images/boss_feathertop.png",
+  // Higgsfield P1 素材（M3 里程碑）
+  player_idle:      "assets/images/sprites/cat_idle.png",
+  player_jump:      "assets/images/sprites/cat_jump.png",
+  boss_feathertop:  "assets/images/sprites/boss_feathertop.png",
+  boss_roachmaster: "assets/images/sprites/boss_roachmaster.png",
+  boss_ratking:     "assets/images/sprites/boss_ratking.png",
+  boss_ninetails:   "assets/images/sprites/boss_ninetails.png",
 };
 
 let loaded = {};
+
+// 原圖 2048px，遊戲內最大顯示約 150px；預縮放避免每幀大圖縮放的開銷
+const MAX_DIM = 512;
+function downscale(img) {
+  if (Math.max(img.width, img.height) <= MAX_DIM) return img;
+  const s = MAX_DIM / Math.max(img.width, img.height);
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * s);
+  c.height = Math.round(img.height * s);
+  const cctx = c.getContext("2d");
+  cctx.imageSmoothingQuality = "high";
+  cctx.drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
 
 export async function loadAllAssets() {
   loaded = {};
   await Promise.all(Object.entries(ASSETS).map(([key, src]) =>
     new Promise((res) => {
       const img = new Image();
-      img.onload = () => { loaded[key] = img; res(); };
+      img.onload = () => { loaded[key] = downscale(img); res(); };
       img.onerror = () => { loaded[key] = null; res(); }; // fallback 幾何圖形
       img.src = src;
     })

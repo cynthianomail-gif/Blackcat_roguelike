@@ -5,6 +5,7 @@
 // =====================================================
 import { Entity } from "./Entity.js";
 import { EventBus } from "../core/EventBus.js";
+import { getAsset } from "../render/AssetLoader.js";
 import {
   PLAYER_SPEED, PLAYER_JUMP_FORCE, PLAYER_GRAVITY, PLAYER_MAX_FALL,
   PLAYER_W, PLAYER_H, PLAYER_BASE_HP, PLAYER_BASE_DAMAGE,
@@ -414,6 +415,20 @@ export class Player extends Entity {
 
     const w = this.w, h = this.h;
 
+    // ── Higgsfield 貓咪剪影素材（有圖用圖；無圖幾何 fallback）──
+    const img = getAsset(this.isGrounded ? "player_idle" : "player_jump");
+    if (img) {
+      const dh = h * 1.3; // 素材比碰撞箱稍大，視覺飽滿
+      const dw = dh * (img.width / img.height);
+      if (this.dashFrames > 0) { // Dash 殘影
+        ctx.globalAlpha = 0.3;
+        ctx.drawImage(img, -dw / 2 - this.facing * 14, h / 2 - dh, dw, dh);
+        ctx.globalAlpha = 1;
+      }
+      ctx.drawImage(img, -dw / 2, h / 2 - dh, dw, dh);
+      ctx.restore();
+    } else {
+
     // ── 身體（黑色圓角剪影）──
     ctx.fillStyle = "#000";
     ctx.beginPath();
@@ -489,6 +504,7 @@ export class Player extends Entity {
     }
 
     ctx.restore();
+    } // 幾何 fallback 結束
 
     // ── 蓄力指示圈（蓄力中顯示在頭頂）──
     if (this.chargeShotMode && this.chargeFrames > 0) {
