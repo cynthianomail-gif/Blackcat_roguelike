@@ -9,9 +9,8 @@ import { StateManager, STATES } from "./core/StateManager.js";
 import { Input } from "./core/Input.js";
 import { Player } from "./entities/Player.js";
 import { BulletPool } from "./entities/BulletPool.js";
-import { Room } from "./world/Room.js";
-import { Floor } from "./world/Floor.js";
-import { CANVAS_W, FLOOR_Y, PLAYER_H, ROOM_TYPES } from "./core/Constants.js";
+import { generateFloor } from "./world/RoomGenerator.js";
+import { CANVAS_W, FLOOR_Y, PLAYER_H } from "./core/Constants.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -27,20 +26,9 @@ const bulletPool = new BulletPool();
 const player = new Player(CANVAS_W / 2, FLOOR_Y - PLAYER_H, bulletPool);
 gm.player = player;
 
-// ── 測試樓層（2 房間；Task 5 換成 RoomGenerator）──
-function buildTestFloor() {
-  const roomA = new Room(ROOM_TYPES.NORMAL, 1);
-  const roomB = new Room(ROOM_TYPES.NORMAL, 1);
-  roomA.addDoor("E");
-  roomB.addDoor("W");
-  const grid = [[roomA, roomB]];
-  roomA.gridPos = { x: 0, y: 0 };
-  roomB.gridPos = { x: 1, y: 0 };
-  const floor = new Floor(1, grid, [roomA, roomB], { x: 0, y: 0 });
-  floor.currentRoom.enter();
-  return floor;
-}
-let floor = buildTestFloor();
+// ── 程序生成樓層 ──
+let floor = generateFloor(1, gm.seed);
+floor.currentRoom.enter();
 gm.currentFloor = floor;
 gm.currentRoom = floor.currentRoom;
 
@@ -108,6 +96,7 @@ function update(dt) {
 // 驗證/除錯用全局掛載
 window.game = { renderer, camera, state, gm, input, player, bulletPool, fps: 0, STATES };
 Object.defineProperty(window.game, "floor", { get: () => floor });
+window.game.generateFloor = generateFloor;
 // 確定性逐幀執行（隱藏分頁 rAF 不觸發時的測試工具；dt 固定 1.0）
 window.game.step = (n = 1) => {
   for (let i = 0; i < n; i++) { update(1); renderer.render(); }
