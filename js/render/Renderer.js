@@ -16,7 +16,7 @@ export class Renderer {
       familiars: [], enemies: [], boss: null,
       bullets: [], enemyBullets: [], bossBullets: [],
       hud: null, mapDisplay: null, itemDisplay: null, synergyAlert: null,
-      background: null,
+      background: null, screens: null,
     };
   }
 
@@ -73,6 +73,9 @@ export class Renderer {
     s.mapDisplay?.draw?.(ctx);
     s.itemDisplay?.drawOverlay?.(ctx);
     s.synergyAlert?.draw?.(ctx);
+
+    // 18. 全螢幕覆蓋（主選單/死亡/通關/暫停）
+    s.screens?.draw?.(ctx);
   }
 
   // 房間系統就位前的佔位背景：灰階天空 + 地板線 + 磚塊格

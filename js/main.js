@@ -12,12 +12,19 @@ import { Player } from "./entities/Player.js";
 import { BulletPool } from "./entities/BulletPool.js";
 import { ItemManager } from "./items/ItemManager.js";
 import { FamiliarManager } from "./items/Familiar.js";
+import { Coin } from "./items/Coin.js";
+import { HeartDrop, BombDrop, KeyDrop } from "./items/Drops.js";
 import { SynergyAlert } from "./ui/SynergyAlert.js";
 import { HUD } from "./ui/HUD.js";
 import { MapDisplay } from "./ui/MapDisplay.js";
 import { ItemDisplay } from "./ui/ItemDisplay.js";
+import { Screens } from "./ui/Screens.js";
+import { SaveManager } from "./core/SaveManager.js";
 import { generateFloor } from "./world/RoomGenerator.js";
-import { CANVAS_W, FLOOR_Y, PLAYER_H } from "./core/Constants.js";
+import {
+  CANVAS_W, FLOOR_Y, PLAYER_H,
+  COIN_DROP_CHANCE, HEART_DROP_CHANCE, BOMB_DROP_CHANCE, KEY_DROP_CHANCE,
+} from "./core/Constants.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -46,6 +53,7 @@ const synergyAlert = new SynergyAlert();
 const hud = new HUD(player, gm);
 const mapDisplay = new MapDisplay(input);
 const itemDisplay = new ItemDisplay();
+const screens = new Screens(state, gm);
 
 // ── 程序生成樓層 ──
 let floor = generateFloor(1, gm.seed);
@@ -61,6 +69,7 @@ renderer.scene.synergyAlert = synergyAlert;
 renderer.scene.hud = hud;
 renderer.scene.mapDisplay = mapDisplay;
 renderer.scene.itemDisplay = itemDisplay;
+renderer.scene.screens = screens;
 mapDisplay.floor = floor;
 
 function syncSceneToRoom() {
@@ -98,6 +107,30 @@ function gameLoop(timestamp) {
 }
 
 function update(dt) {
+  screens.update(dt);
+
+  // ── 全螢幕狀態閘門：選單/死亡/通關/暫停時凍結遊戲 ──
+  if (state.is(STATES.MAIN_MENU)) {
+    if (input.confirmPressed) state.change(STATES.EXPLORING);
+    input.endFrame();
+    return;
+  }
+  if (state.is(STATES.PLAYER_DEAD) || state.is(STATES.RUN_CLEAR)) {
+    if (input.confirmPressed) window.location.reload(); // 回主選單（重開乾淨一局）
+    input.endFrame();
+    return;
+  }
+  if (state.is(STATES.PAUSED)) {
+    if (input.pausePressed) state.change(STATES.EXPLORING);
+    input.endFrame();
+    return;
+  }
+  if (input.pausePressed) {
+    state.change(STATES.PAUSED);
+    input.endFrame();
+    return;
+  }
+
   camera.update();
   if (player.active) player.update(dt, input);
 
@@ -147,6 +180,29 @@ function update(dt) {
 // Task 6 驗收：敵人死亡時 Console 輸出
 EventBus.on("enemyDied", (e) => console.log("enemyDied:", e.constructor.name));
 
+// ── 敵人掉落（Section 2.5 經濟）：金幣/紅心/炸彈/鑰匙 ──
+// 幸運 +3%/點；挑戰房與雙倍好運道具掉落翻倍
+EventBus.on("enemyDied", (e) => {
+  const room = gm.currentRoom;
+  if (!room || !e || e === room.boss || !e.w) return; // Boss 獎勵由 BossController 發
+  const x = e.x + e.w / 2, y = e.y + e.h / 2;
+  const luckBonus = Math.min((gm.luck || 0) * 0.03, 0.09);
+  const mult = (gm.dropMult || 1) * (room.isChallenge ? 2 : 1);
+  const roll = Math.random();
+  let make = null;
+  if (roll < COIN_DROP_CHANCE + luckBonus) make = () => new Coin(x, y);
+  else if (roll < COIN_DROP_CHANCE + HEART_DROP_CHANCE + luckBonus) make = () => new HeartDrop(x, y, 0.5);
+  else if (roll < COIN_DROP_CHANCE + HEART_DROP_CHANCE + BOMB_DROP_CHANCE + luckBonus) make = () => new BombDrop(x, y);
+  else if (roll < COIN_DROP_CHANCE + HEART_DROP_CHANCE + BOMB_DROP_CHANCE + KEY_DROP_CHANCE + luckBonus) make = () => new KeyDrop(x, y);
+  if (make) for (let i = 0; i < mult; i++) room.items.push(make());
+});
+
+// 玩家死亡 → 記錄最高層數 → 死亡畫面
+EventBus.on("playerDied", () => {
+  SaveManager.recordRun(gm.floor);
+  state.change(STATES.PLAYER_DEAD);
+});
+
 // Boss 死亡 → 0.8 秒（48 幀）後進入 FLOOR_TRANSITION
 let floorTransitionTimer = -1;
 EventBus.on("bossDied", () => { floorTransitionTimer = 48; });
@@ -172,6 +228,7 @@ const FINAL_FLOOR = 7;
 function goToNextFloor() {
   const next = floor.floorNum + 1;
   if (next > FINAL_FLOOR) {
+    SaveManager.recordRun(FINAL_FLOOR); // 通關 = 抵達 F7
     state.change(STATES.RUN_CLEAR);
     return;
   }

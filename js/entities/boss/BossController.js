@@ -12,7 +12,7 @@ import { Coin } from "../../items/Coin.js";
 import {
   CANVAS_W, WALL_THICKNESS,
   BOSS_PHASE2_THRESHOLD, BOSS_HIT_FLASH_FRAMES, BOSS_DEATH_DURATION,
-  BOSS_REWARD_COINS,
+  BOSS_REWARD_COINS, BOSS_HP_SCALE,
 } from "../../core/Constants.js";
 
 const CEILING_Y = WALL_THICKNESS;
@@ -22,6 +22,9 @@ export class BossController extends BaseEnemy {
   constructor(pattern, floorNum = 1) {
     super(CANVAS_W / 2 - pattern.w / 2, HOVER_BASE_Y,
           pattern.w, pattern.h, pattern.hp, 0, 1);
+    // Boss 不吃 ENEMY_HP_SCALE（BaseEnemy 已套用），改用獨立 BOSS_HP_SCALE
+    this.maxHP = Math.round(pattern.hp * BOSS_HP_SCALE);
+    this.hp = this.maxHP;
     this.pattern = pattern;
     this.floorNum = floorNum;
     this.phase = 1;

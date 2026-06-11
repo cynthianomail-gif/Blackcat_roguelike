@@ -39,6 +39,7 @@ export class Input {
   get usePressed()   { return this.pressed("KeyE"); }
   get mapHeld()      { return this.isDown("Tab"); }
   get pausePressed() { return this.pressed("Escape"); }
+  get confirmPressed() { return this.pressed("Enter"); }
 
   // 每幀結束時呼叫，清除單幀按鍵
   endFrame() { this.justPressed.clear(); }

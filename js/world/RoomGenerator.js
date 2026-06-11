@@ -18,6 +18,8 @@ import { setupTreasureRoom } from "../rooms/TreasureRoom.js";
 import { setupShopRoom } from "../rooms/ShopRoom.js";
 import { setupSecretRoom } from "../rooms/SecretRoom.js";
 import { setupDevilRoom } from "../rooms/DevilRoom.js";
+import { setupAngelRoom } from "../rooms/AngelRoom.js";
+import { setupChallengeRoom } from "../rooms/ChallengeRoom.js";
 import {
   GRID_W, GRID_H, MIN_ROOMS, MAX_ROOMS, ROOM_TYPES,
 } from "../core/Constants.js";
@@ -96,7 +98,11 @@ export function generateFloor(floorNum, seed) {
 
   takeRoomFor(ROOM_TYPES.TREASURE);
   takeRoomFor(ROOM_TYPES.SHOP);
-  if (rng.float() < 0.3) takeRoomFor(ROOM_TYPES.DEVIL); // 魔鬼房 0-1（30%）
+  // 魔鬼房 0-1（30%）；未出魔鬼房時 15% 出天使房（魔鬼可覆蓋天使）
+  if (rng.float() < 0.3) takeRoomFor(ROOM_TYPES.DEVIL);
+  else if (rng.float() < 0.15) takeRoomFor(ROOM_TYPES.ANGEL);
+  // 挑戰房 0-1（40%）
+  if (rng.float() < 0.4) takeRoomFor(ROOM_TYPES.CHALLENGE);
 
   // SECRET：60% 機率，與某普通房相鄰的空格（DEMO：先生成房間，門待炸彈系統）
   if (rng.float() < 0.6) {
@@ -147,10 +153,12 @@ export function generateFloor(floorNum, seed) {
   // ── Step 6: 特殊房間佈置（js/rooms/ 各模組）──
   for (const room of rooms) {
     switch (room.type) {
-      case ROOM_TYPES.TREASURE: setupTreasureRoom(room, rng, floorNum); break;
-      case ROOM_TYPES.SHOP:     setupShopRoom(room, rng, floorNum); break;
-      case ROOM_TYPES.SECRET:   setupSecretRoom(room, rng, floorNum); break;
-      case ROOM_TYPES.DEVIL:    setupDevilRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.TREASURE:  setupTreasureRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.SHOP:      setupShopRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.SECRET:    setupSecretRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.DEVIL:     setupDevilRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.ANGEL:     setupAngelRoom(room, rng, floorNum); break;
+      case ROOM_TYPES.CHALLENGE: setupChallengeRoom(room, rng, floorNum, spawnEnemies); break;
     }
   }
 

@@ -67,8 +67,13 @@ export const BULLET_POOL_SIZE = 150;   // 最大活躍子彈數
 export const BOSS_BULLET_POOL = 80;    // Boss 子彈池大小
 // 超出上限時：銷毀最早創建的子彈（FIFO）
 
+// ── Task 13 平衡旋鈕（Section 8 平衡驗收：估算後調整）──
+// 估算基準：初始 DPS 理論 10/s、實戰有效 2~4/s
+export const ENEMY_HP_SCALE = 2.5;  // 普通房清怪時間 6s → 約 15-30s
+export const BOSS_HP_SCALE = 1.6;   // F1 Boss 200→320：中期 DPS 下約 65-105s
+
 // ── 2.5 經濟系統 ─────────────────────────────────────
-export const COIN_DROP_CHANCE = 0.6;    // 普通敵人掉金幣機率
+export const COIN_DROP_CHANCE = 0.5;    // 普通敵人掉金幣機率（平衡：0.6→0.5，通關估算 104→87 枚）
 export const HEART_DROP_CHANCE = 0.15;  // 普通敵人掉紅心機率
 export const BOMB_DROP_CHANCE = 0.08;   // 普通敵人掉炸彈機率
 export const KEY_DROP_CHANCE = 0.05;    // 普通敵人掉鑰匙機率

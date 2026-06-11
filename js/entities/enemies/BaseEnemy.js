@@ -5,7 +5,9 @@
 // =====================================================
 import { Entity, rectsOverlap } from "../Entity.js";
 import { EventBus } from "../../core/EventBus.js";
-import { CANVAS_W, WALL_THICKNESS, FLOOR_Y } from "../../core/Constants.js";
+import {
+  CANVAS_W, WALL_THICKNESS, FLOOR_Y, ENEMY_HP_SCALE,
+} from "../../core/Constants.js";
 
 const CEILING_Y = WALL_THICKNESS;
 const KNOCKBACK_DECAY = 0.8; // 擊退速度每幀衰減
@@ -13,7 +15,9 @@ const KNOCKBACK_DECAY = 0.8; // 擊退速度每幀衰減
 export class BaseEnemy extends Entity {
   constructor(x, y, w, h, hp, speed, damage) {
     super(x, y, w, h);
-    this.maxHP = hp; this.hp = hp;
+    // 規格 Section 7 數值 × 平衡縮放（Boss 由 BossController 覆寫為 BOSS_HP_SCALE）
+    const scaled = Math.round(hp * ENEMY_HP_SCALE);
+    this.maxHP = scaled; this.hp = scaled;
     this.speed = speed; this.damage = damage;
     this.state = "IDLE"; // IDLE | CHASE | ATTACK | HURT | DEAD
     this.hurtFrames = 0;
