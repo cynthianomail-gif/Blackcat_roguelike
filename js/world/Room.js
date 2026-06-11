@@ -18,6 +18,7 @@ export class Room {
     this.isCleared = false;
     this.doors = { N: null, S: null, E: null, W: null }; // null or Door
     this.enemies = [];
+    this.enemyBullets = []; // 敵人投射物（子彈/炸彈）；陣列引用不可換（Renderer 持有）
     this.items = [];    // 地上的道具
     this.objects = [];  // 環境物件（炸彈桶/商品等）
     this.isRevealed = false;
@@ -41,6 +42,7 @@ export class Room {
   enter() {
     this.isVisited = true;
     this.isRevealed = true;
+    this.enemyBullets.length = 0; // 重進房不留殘彈
     if (this.isCleared || this.startsCleared || this.enemies.length === 0) {
       this.isCleared = true;
       this.openAllDoors();
@@ -57,6 +59,13 @@ export class Room {
   update(dt, player) {
     this.enemies.forEach(e => e.active && e.update(dt, player));
     this.items.forEach(i => i.update?.(dt, player));
+
+    // 敵人投射物（就地清除，保持陣列引用）
+    for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+      const b = this.enemyBullets[i];
+      b.update(dt, player);
+      if (!b.active) this.enemyBullets.splice(i, 1);
+    }
 
     // 清怪檢查
     if (!this.isCleared && this.isBattleOver()) {

@@ -7,6 +7,7 @@ import { loadAllAssets } from "./render/AssetLoader.js";
 import { GameManager } from "./core/GameManager.js";
 import { StateManager, STATES } from "./core/StateManager.js";
 import { Input } from "./core/Input.js";
+import { EventBus } from "./core/EventBus.js";
 import { Player } from "./entities/Player.js";
 import { BulletPool } from "./entities/BulletPool.js";
 import { generateFloor } from "./world/RoomGenerator.js";
@@ -41,6 +42,7 @@ function syncSceneToRoom() {
   gm.currentRoom = room;
   renderer.scene.room = room;
   renderer.scene.enemies = room?.enemies || [];
+  renderer.scene.enemyBullets = room?.enemyBullets || [];
 }
 syncSceneToRoom();
 
@@ -89,12 +91,24 @@ function update(dt) {
   }
 
   const enemies = renderer.scene.enemies || [];
-  bulletPool.update(dt, enemies.filter(e => e.active));
+  bulletPool.update(dt, enemies.filter(e => e.active), player);
   input.endFrame();
 }
 
+// Task 6 驗收：敵人死亡時 Console 輸出
+EventBus.on("enemyDied", (e) => console.log("enemyDied:", e.constructor.name));
+
 // 驗證/除錯用全局掛載
 window.game = { renderer, camera, state, gm, input, player, bulletPool, fps: 0, STATES };
+// 測試工具：直接跳到指定格子的房間
+window.game.gotoRoom = (x, y) => {
+  const r = floor.roomAt(x, y);
+  if (!r) return null;
+  floor.currentPos = { x, y };
+  r.enter();
+  syncSceneToRoom();
+  return r;
+};
 Object.defineProperty(window.game, "floor", { get: () => floor });
 window.game.generateFloor = generateFloor;
 // 確定性逐幀執行（隱藏分頁 rAF 不觸發時的測試工具；dt 固定 1.0）

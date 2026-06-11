@@ -6,6 +6,7 @@
 import { SeededRandom } from "../core/SeededRandom.js";
 import { Room } from "./Room.js";
 import { Floor } from "./Floor.js";
+import { spawnF1Enemies } from "../entities/enemies/F1Enemies.js";
 import {
   GRID_W, GRID_H, MIN_ROOMS, MAX_ROOMS, ROOM_TYPES,
 } from "../core/Constants.js";
@@ -115,6 +116,13 @@ export function generateFloor(floorNum, seed) {
       if (neighbor && neighbor.type !== ROOM_TYPES.SECRET) {
         room.addDoor(dd.dir);
       }
+    }
+  }
+
+  // ── Step 5: 生成敵人（NORMAL 房，起始房除外；M1 全部使用 F1 敵人）──
+  for (const room of rooms) {
+    if (room.type === ROOM_TYPES.NORMAL && !room.isStart) {
+      spawnF1Enemies(room, rng);
     }
   }
 

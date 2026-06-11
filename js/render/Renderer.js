@@ -14,7 +14,7 @@ export class Renderer {
     this.scene = {
       camera: null, room: null, player: null,
       familiars: [], enemies: [], boss: null,
-      bullets: [], bossBullets: [],
+      bullets: [], enemyBullets: [], bossBullets: [],
       hud: null, mapDisplay: null, itemDisplay: null, synergyAlert: null,
       background: null,
     };
@@ -50,8 +50,9 @@ export class Renderer {
       // 8. Boss
       if (s.boss?.active) s.boss.draw(ctx);
 
-      // 9. 所有子彈（玩家 + Boss）
+      // 9. 所有子彈（玩家 + 敵人 + Boss）
       (s.bullets || []).forEach(b => b.active && b.draw(ctx));
+      (s.enemyBullets || []).forEach(b => b.active && b.draw(ctx));
       (s.bossBullets || []).forEach(b => b.active && b.draw(ctx));
 
       // 10. 玩家最後畫（永遠在最前面）

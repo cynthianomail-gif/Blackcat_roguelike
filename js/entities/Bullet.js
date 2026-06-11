@@ -34,6 +34,7 @@ export class Bullet extends Entity {
   spawn({ x, y, vx, vy, damage, range, w, h, isEX = false, piercing = false }) {
     this.reset();
     this.x = x; this.y = y;
+    this.prevX = x; this.prevY = y;
     this.vx = vx; this.vy = vy;
     this.damage = damage;
     this.range = range;
@@ -70,6 +71,7 @@ export class Bullet extends Entity {
       }
     }
 
+    this.prevX = this.x; this.prevY = this.y; // 掃掠碰撞用（高速子彈防穿透）
     const moveX = this.vx * dt;
     const moveY = this.vy * dt;
     this.x += moveX;
