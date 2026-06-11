@@ -51,6 +51,7 @@ function syncSceneToRoom() {
   renderer.scene.room = room;
   renderer.scene.enemies = room?.enemies || [];
   renderer.scene.enemyBullets = room?.enemyBullets || [];
+  renderer.scene.bossBullets = room?.boss?.bulletPool.bullets || [];
 }
 syncSceneToRoom();
 
@@ -101,11 +102,21 @@ function update(dt) {
   const enemies = renderer.scene.enemies || [];
   bulletPool.update(dt, enemies.filter(e => e.active), player);
   synergyAlert.update(dt);
+
+  if (floorTransitionTimer >= 0) {
+    floorTransitionTimer -= dt;
+    if (floorTransitionTimer < 0) state.change(STATES.FLOOR_TRANSITION);
+  }
+
   input.endFrame();
 }
 
 // Task 6 驗收：敵人死亡時 Console 輸出
 EventBus.on("enemyDied", (e) => console.log("enemyDied:", e.constructor.name));
+
+// Boss 死亡 → 0.8 秒（48 幀）後進入 FLOOR_TRANSITION
+let floorTransitionTimer = -1;
+EventBus.on("bossDied", () => { floorTransitionTimer = 48; });
 
 // 驗證/除錯用全局掛載
 window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, fps: 0, STATES };

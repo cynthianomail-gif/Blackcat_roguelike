@@ -9,6 +9,8 @@ import { Floor } from "./Floor.js";
 import { spawnF1Enemies } from "../entities/enemies/F1Enemies.js";
 import { ItemPickup } from "../items/ItemPickup.js";
 import { pickItemForFloor } from "../items/ItemDatabase.js";
+import { BossController } from "../entities/boss/BossController.js";
+import { BOSS_BY_FLOOR } from "../entities/boss/BossPattern.js";
 import { CANVAS_W, FLOOR_Y } from "../core/Constants.js";
 import {
   GRID_W, GRID_H, MIN_ROOMS, MAX_ROOMS, ROOM_TYPES,
@@ -134,6 +136,17 @@ export function generateFloor(floorNum, seed) {
     if (room.type === ROOM_TYPES.TREASURE) {
       const item = pickItemForFloor(rng, floorNum);
       if (item) room.items.push(new ItemPickup(item.id, CANVAS_W / 2, FLOOR_Y - 50));
+    }
+  }
+
+  // ── Step 7: Boss 房放 Boss ──
+  for (const room of rooms) {
+    if (room.type === ROOM_TYPES.BOSS) {
+      const pattern = BOSS_BY_FLOOR[floorNum] || BOSS_BY_FLOOR[1];
+      const boss = new BossController(pattern, floorNum);
+      boss.room = room;
+      room.boss = boss;
+      room.enemies.push(boss); // 進入清怪/鎖門/子彈碰撞共用流程
     }
   }
 
