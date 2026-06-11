@@ -20,6 +20,25 @@ export class BaseEnemy extends Entity {
     this.knockbackX = 0; this.knockbackY = 0;
     this.room = null;        // 生成時由 spawner 填入
     this.contactDamage = true;
+    // ── 狀態異常（道具效果）──
+    this.stunFrames = 0;     // 暈眩：AI 完全停止
+    this.slowFrames = 0;     // 減速：behave 的 dt 打折
+    this.slowAmt = 0;        // 減速比例（0.4 = 速度 -40%）
+    this.poisonFrames = 0;   // 中毒：每 60f 扣 poisonDmg
+    this.poisonDmg = 0;
+    this.poisonTick = 0;
+  }
+
+  applyStun(frames) { this.stunFrames = Math.max(this.stunFrames, frames); }
+
+  applySlow(frames, amt) {
+    this.slowFrames = Math.max(this.slowFrames, frames);
+    this.slowAmt = Math.max(this.slowAmt, amt);
+  }
+
+  applyPoison(dmg, frames) {
+    this.poisonDmg = Math.max(this.poisonDmg, dmg);
+    this.poisonFrames = Math.max(this.poisonFrames, frames);
   }
 
   takeDamage(dmg, knockX = 0, knockY = 0) {
@@ -39,6 +58,18 @@ export class BaseEnemy extends Entity {
   update(dt, player) {
     if (this.state === "DEAD" || !this.active) return;
 
+    // ── 中毒：每 60f 扣血（不打斷 AI）──
+    if (this.poisonFrames > 0) {
+      this.poisonFrames -= dt;
+      this.poisonTick += dt;
+      if (this.poisonTick >= 60) {
+        this.poisonTick = 0;
+        this.hp -= this.poisonDmg;
+        if (this.hp <= 0) { this.die(); return; }
+      }
+    }
+    if (this.slowFrames > 0) this.slowFrames -= dt;
+
     if (this.hurtFrames > 0) {
       // HURT：行為中斷，套用擊退
       this.state = "HURT";
@@ -47,8 +78,12 @@ export class BaseEnemy extends Entity {
       this.y += this.knockbackY * dt;
       this.knockbackX *= KNOCKBACK_DECAY;
       this.knockbackY *= KNOCKBACK_DECAY;
+    } else if (this.stunFrames > 0) {
+      this.stunFrames -= dt; // 暈眩：原地停止
     } else {
-      this.behave(dt, player); // 子類各自的 AI
+      // 減速：縮小 behave 收到的時間刻度
+      const effDt = this.slowFrames > 0 ? dt * (1 - this.slowAmt) : dt;
+      this.behave(effDt, player); // 子類各自的 AI
     }
 
     this.clampToRoom();

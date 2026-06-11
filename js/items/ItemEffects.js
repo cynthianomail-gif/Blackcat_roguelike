@@ -1,15 +1,15 @@
 // =====================================================
-// ItemEffects.js — Synergy 表（企畫書 Section 5）
-// Task 7：先收錄道具 01-20 可組成的 8 組；
-// 瀕死狂神（需 21-35）、貓咪軍團（需 51-70）→ TODO Task 12
+// ItemEffects.js — Synergy 表（企畫書 Section 5）完整 10 組
 // =====================================================
+import { GameManager } from "../core/GameManager.js";
+
 export const SYNERGY_TABLE = [
   {
     name: "死亡螺旋",
     requires: [8, 3], // 毛球吐息 + 彎爪勾
     apply(player) {
       player.chargeShotMode = true;
-      player.chargeHoming = true; // [引擎TODO] 蓄力雷射具備追蹤
+      player.chargeHoming = true; // 蓄力彈獲得強化追蹤
     },
   },
   {
@@ -24,7 +24,7 @@ export const SYNERGY_TABLE = [
     name: "致命彈幕",
     requires: [17, 13], // 炸裂毛 + 炸魚排
     apply(player) {
-      player.bombExplosionBullets = true; // [引擎TODO] 炸彈爆炸同時四向射擊
+      player.bombExplosionBullets = true; // 炸彈爆炸同時四向射擊
     },
   },
   {
@@ -38,7 +38,7 @@ export const SYNERGY_TABLE = [
     name: "彈跳大師",
     requires: [15, 14], // 彈力毛球 + 毛球分裂
     apply(player) {
-      player.splitOnBounce = true; // [引擎TODO] 反彈時也觸發分裂
+      player.splitOnBounce = true; // 反彈時也觸發分裂
     },
   },
   {
@@ -52,7 +52,7 @@ export const SYNERGY_TABLE = [
     name: "毒爆地圖",
     requires: [18, 17], // 毒魚 + 炸裂毛
     apply(player) {
-      player.poisonCloudOnExplode = true; // [引擎TODO] 爆炸散佈毒雲
+      player.poisonCloudOnExplode = true; // 爆炸散佈毒雲
     },
   },
   {
@@ -62,5 +62,21 @@ export const SYNERGY_TABLE = [
       player.bulletRange *= 1.5; // 穿透使雷射射程延長
     },
   },
-  // TODO Task 12：瀕死狂神（瀕死爆發+磨爪石+戰鬥本能）、貓咪軍團（三跟班）
+  {
+    name: "瀕死狂神",
+    requires: [32, 22, 30], // 瀕死爆發 + 磨爪石 + 戰鬥本能
+    apply(player) {
+      // 血量低時傷害持續累積（ItemManager.update 每秒 +0.1，無上限）
+      player.berserkStackMode = true;
+    },
+  },
+  {
+    name: "貓咪軍團",
+    requires: [51, 52, 53], // 小灰貓 + 小花貓 + 小黑魔
+    apply(player) {
+      // 三跟班火力 ×1.5，輸出接近玩家本身
+      const fm = GameManager.getInstance().familiarManager;
+      if (fm) fm.damageMult = 1.5;
+    },
+  },
 ];

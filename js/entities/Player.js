@@ -47,6 +47,39 @@ export class Player extends Entity {
     this.luck = 0;
     this.damageBonus = 0;                   // 戰鬥本能等臨時加成
 
+    // ── Task 12：子彈進階旗標（道具 applyEffect 設定）──
+    this.bulletReturns = false;             // 回力標
+    this.bulletReturnDistance = 300;
+    this.bulletHoverTime = 0;               // 慵懶子彈
+    this.bulletSplitOnHit = 0;              // 毛球分裂
+    this.bulletExplosionBullets = 0;        // 炸裂毛
+    this.bulletType = "normal";             // "bomb" = 炸魚排
+    this.bulletArc = false;                 // 毒魚拋物線
+    this.bulletPoison = null;               // { dmg, dur }
+    this.bulletStunChance = 0;              // 鐵頭功
+    this.damagePerPx = 0;                   // 遠距獵手
+    this.altDoubleShot = false;             // 左爪強化：隔發 ×2
+    this._altToggle = false;
+    this.chargeShotMode = false;            // 蓄力射擊（毛球吐息/奶油蛋糕）
+    this.maxChargeMult = 1;
+    this.chargeTime = [0.3, 0.6, 1.0, 1.5, 2.0]; // 秒
+    this.chargeHoming = false;              // 死亡螺旋 Synergy
+    this.chargeFrames = 0;
+    this.splitDamageMult = 1;               // 豪雨流星 Synergy
+    this.splitOnBounce = false;             // 彈跳大師 Synergy
+    this.bombExplosionBullets = false;      // 致命彈幕 Synergy
+    this.poisonCloudOnExplode = false;      // 毒爆地圖 Synergy
+    this.shootMode = "bullets";             // "laser" = 雷射眼
+    this.autoLaser = false;                 // 永恆凝視
+    this.laserBeam = null;                  // 本幀雷射線段（draw 用）
+    this.autoLaserBeam = null;
+    this._laserTickTimer = 0;
+    this.coinDamageBonus = 0;               // 小魚乾即力量（ItemManager 每幀計算）
+    this.tempDamageMultFrames = 0;          // 屠殺魔法書：×2 剩餘幀
+    this.reviveChance = 0;                  // 九死還魂
+    this.reviveUsed = false;
+    this.trinketSlots = 1;                  // 雙重保護
+
     // ── EX 能量 ──
     this.exEnergy = 0;
 
@@ -74,7 +107,10 @@ export class Player extends Entity {
   }
 
   get isInvincible() { return this.invincibleFrames > 0 || this.dashFrames > 0; }
-  get totalDamage() { return this.damage + this.damageBonus; }
+  get totalDamage() {
+    const base = this.damage + this.damageBonus + this.coinDamageBonus;
+    return this.tempDamageMultFrames > 0 ? base * 2 : base; // 屠殺魔法書 ×2
+  }
 
   update(dt, input) {
     if (!input) return;
@@ -133,13 +169,32 @@ export class Player extends Entity {
     if (this.y < CEILING_Y) { this.y = CEILING_Y; this.vy = Math.max(this.vy, 0); }
     this.x = Math.max(WALL_THICKNESS, Math.min(CANVAS_W - WALL_THICKNESS - this.w, this.x));
 
-    // ── 連發射擊 ──
+    // ── 射擊（三種模式：雷射 / 蓄力 / 連發）──
     if (this.fireTimer > 0) this.fireTimer -= dt;
-    this.isShooting = input.shootHeld;
-    if (input.shootHeld && this.fireTimer <= 0) {
-      this.shootVolley(false);
-      this.fireTimer = this.fireRate;
-      EventBus.emit("playerShoot", this);
+    if (this.tempDamageMultFrames > 0) this.tempDamageMultFrames -= dt;
+    if (this.shootMode === "laser") {
+      this.isShooting = input.shootHeld; // 光束本體在 updateLaser（main.js 傳入敵人）
+    } else if (this.chargeShotMode) {
+      // 按住蓄力，放開發射；倍率依蓄力時間分 5 檔
+      if (input.shootHeld) {
+        this.chargeFrames += dt;
+        this.isShooting = true;
+      } else {
+        if (this.chargeFrames > 0 && this.fireTimer <= 0) {
+          this.shootVolley(false, this.currentChargeMult());
+          this.fireTimer = this.fireRate;
+          EventBus.emit("playerShoot", this);
+        }
+        this.chargeFrames = 0;
+        this.isShooting = false;
+      }
+    } else {
+      this.isShooting = input.shootHeld;
+      if (input.shootHeld && this.fireTimer <= 0) {
+        this.shootVolley(false);
+        this.fireTimer = this.fireRate;
+        EventBus.emit("playerShoot", this);
+      }
     }
 
     // ── EX 必殺 ──
@@ -166,27 +221,40 @@ export class Player extends Entity {
     this.tiltAngle += (targetTilt - this.tiltAngle) * TILT_SPEED * dt;
   }
 
+  // 蓄力倍率：通過的時間檔位數（0-5 檔）線性換算
+  currentChargeMult() {
+    const tier = this.chargeTime.filter(t => this.chargeFrames >= t * 60).length;
+    return 1 + (this.maxChargeMult - 1) * (tier / this.chargeTime.length);
+  }
+
   // 發射一輪子彈（bulletCount 顆，扇形展開 spreadAngle）
-  shootVolley(isEX) {
+  shootVolley(isEX, chargeMult = 1) {
     const count = isEX ? 1 : this.bulletCount;
     const spreadRad = (this.spreadAngle * Math.PI) / 180;
     const baseAngle = this.facing === 1 ? 0 : Math.PI;
 
+    // 左爪強化：每隔一顆子彈傷害 ×2（交替觸發）
+    let dmgMult = chargeMult;
+    if (this.altDoubleShot && !isEX) {
+      this._altToggle = !this._altToggle;
+      if (this._altToggle) dmgMult *= 2;
+    }
+
     for (let i = 0; i < count; i++) {
       // 多顆時以正前方為中心扇形展開
       const offset = count > 1 ? (i - (count - 1) / 2) * spreadRad : 0;
-      this.spawnBullet(baseAngle + offset, isEX);
+      this.spawnBullet(baseAngle + offset, isEX, dmgMult, chargeMult > 1);
     }
 
     // 十字貓掌：機率向其餘三個方向齊射
     if (!isEX && this.crossFireChance > 0 && Math.random() < this.crossFireChance) {
       for (const extra of [Math.PI / 2, Math.PI, Math.PI * 1.5]) {
-        this.spawnBullet(baseAngle + extra, false);
+        this.spawnBullet(baseAngle + extra, false, dmgMult, false);
       }
     }
   }
 
-  spawnBullet(angle, isEX) {
+  spawnBullet(angle, isEX, dmgMult = 1, charged = false) {
     const mouthX = this.facing === 1 ? this.x + this.w : this.x;
     const mouthY = this.y + 12;
     const speed = isEX ? EX_BULLET_SPEED : this.bulletSpeed;
@@ -195,16 +263,84 @@ export class Player extends Entity {
     const bullet = this.bulletPool.spawn({
       x: mouthX - size.w / 2, y: mouthY - size.h / 2,
       vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-      damage: isEX ? this.totalDamage * EX_BULLET_DAMAGE_MULT : this.totalDamage,
+      damage: isEX ? this.totalDamage * EX_BULLET_DAMAGE_MULT : this.totalDamage * dmgMult,
       range: isEX ? 9999 : this.bulletRange,
       w: size.w, h: size.h,
       isEX, piercing: this.bulletPiercing,
     });
-    bullet.homingStrength = this.bulletHoming;
+    bullet.homingStrength = this.bulletHoming || (charged && this.chargeHoming ? 0.08 : 0);
     bullet.sizeMulti = this.bulletSizeMulti;
     bullet.knockback = this.bulletKnockback;
     bullet.maxBounces = this.bulletBounces;
+    if (isEX) return bullet;
+
+    // ── Task 12 進階屬性傳遞 ──
+    bullet.returns = this.bulletReturns;
+    bullet.returnDistance = this.bulletReturnDistance;
+    bullet.hoverTime = this.bulletHoverTime;
+    bullet.splitOnHit = this.bulletSplitOnHit;
+    bullet.splitOnBounce = this.splitOnBounce;
+    bullet.explosionBullets = this.bulletExplosionBullets;
+    bullet.bombType = this.bulletType === "bomb";
+    bullet.poison = this.bulletPoison;
+    bullet.damagePerPx = this.damagePerPx;
+    bullet.isCharged = charged;
+    if (this.bulletArc) {
+      bullet.gravity = 0.25;
+      bullet.vy -= 4; // 拋物：先上拋
+    }
+    if (this.bulletStunChance > 0 && Math.random() < this.bulletStunChance) {
+      bullet.stunOnHit = 60;
+    }
     return bullet;
+  }
+
+  // ── 雷射模式（main.js 每幀呼叫，傳入活敵清單）──
+  // 雷射眼：朝向光束 dps = damage×3；永恆凝視：自動鎖定副雷射 dps = damage×1.5
+  // 傷害每 6 幀結算一次，避免敵人被逐幀 hurtFrames 鎖死
+  updateLaser(dt, enemies) {
+    this.laserBeam = null;
+    this.autoLaserBeam = null;
+    const needsTick = (this.shootMode === "laser" && this.isShooting) || this.autoLaser;
+    if (!needsTick) return;
+    this._laserTickTimer += dt;
+    const doTick = this._laserTickTimer >= 6;
+    if (doTick) this._laserTickTimer = 0;
+
+    const x0 = this.facing === 1 ? this.x + this.w : this.x;
+    const y0 = this.y + 12;
+
+    if (this.shootMode === "laser" && this.isShooting) {
+      const x1 = x0 + this.facing * this.bulletRange;
+      this.laserBeam = { x0, y0, x1, y1: y0 };
+      if (doTick) {
+        const tickDmg = (this.totalDamage * 3) * (6 / 60);
+        for (const e of enemies) {
+          if (!e.active) continue;
+          const inBand = e.y <= y0 + 8 && e.y + e.h >= y0 - 8;
+          const inRange = this.facing === 1
+            ? e.x + e.w >= x0 && e.x <= x1
+            : e.x <= x0 && e.x + e.w >= x1;
+          if (inBand && inRange) e.takeDamage(tickDmg);
+        }
+      }
+    }
+
+    if (this.autoLaser && enemies.length > 0) {
+      let best = null, bestD = Infinity;
+      for (const e of enemies) {
+        if (!e.active) continue;
+        const d = (e.x - this.x) ** 2 + (e.y - this.y) ** 2;
+        if (d < bestD) { bestD = d; best = e; }
+      }
+      if (best) {
+        this.autoLaserBeam = {
+          x0, y0,
+          x1: best.x + best.w / 2, y1: best.y + best.h / 2,
+        };
+        if (doTick) best.takeDamage((this.totalDamage * 1.5) * (6 / 60));
+      }
+    }
   }
 
   // 命中敵人時呼叫（碰撞系統觸發）
@@ -239,6 +375,8 @@ export class Player extends Entity {
     EventBus.emit("playerHeal", { player: this, amount });
   }
 
+  healFull() { this.heal(this.maxHP); }
+
   die() {
     if (this.lives > 0) {
       this.lives--;
@@ -246,11 +384,20 @@ export class Player extends Entity {
       this.invincibleFrames = INVINCIBILITY_FRAMES * 2;
       return;
     }
+    // 九死還魂：50% 機率復活（一局一次，HP=0.5）
+    if (this.reviveChance > 0 && !this.reviveUsed && Math.random() < this.reviveChance) {
+      this.reviveUsed = true;
+      this.hp = 0.5;
+      this.invincibleFrames = INVINCIBILITY_FRAMES * 2;
+      EventBus.emit("playerRevived", this);
+      return;
+    }
     this.active = false;
     EventBus.emit("playerDied", this);
   }
 
   draw(ctx) {
+    this.drawLasers(ctx); // 雷射光束在身體之前畫（世界座標）
     // 受傷閃爍：invincibleFrames 期間每 BLINK_INTERVAL 幀隱藏一次
     if (this.invincibleFrames > 0 &&
         Math.floor(this.invincibleFrames / BLINK_INTERVAL) % 2 === 1) {
@@ -342,5 +489,53 @@ export class Player extends Entity {
     }
 
     ctx.restore();
+
+    // ── 蓄力指示圈（蓄力中顯示在頭頂）──
+    if (this.chargeShotMode && this.chargeFrames > 0) {
+      const mult = this.currentChargeMult();
+      const full = mult >= this.maxChargeMult;
+      ctx.save();
+      ctx.strokeStyle = full ? "#ffd75e" : "#9ad1ff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, this.y - 14, 8,
+        -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, (mult - 1) / Math.max(1, this.maxChargeMult - 1)));
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  drawLasers(ctx) {
+    if (this.laserBeam) {
+      const b = this.laserBeam;
+      ctx.save();
+      ctx.strokeStyle = "rgba(200,16,46,0.9)";
+      ctx.lineWidth = 6;
+      ctx.shadowColor = "#ff5e3a";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(b.x0, b.y0);
+      ctx.lineTo(b.x1, b.y1);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(b.x0, b.y0);
+      ctx.lineTo(b.x1, b.y1);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (this.autoLaserBeam) {
+      const b = this.autoLaserBeam;
+      ctx.save();
+      ctx.strokeStyle = "rgba(154,209,255,0.8)";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+      ctx.moveTo(b.x0, b.y0);
+      ctx.lineTo(b.x1, b.y1);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 }

@@ -81,10 +81,10 @@ export class Room {
   }
 
   // ── 子彈 vs 牆壁 ──────────────────────────────────
-  // 撞牆銷毀；有彈力道具（maxBounces）時反彈
+  // 撞牆銷毀（觸發爆裂等死亡特效）；彈力毛球反彈；幽靈彈穿牆
   handleBulletCollisions(bullets) {
     for (const b of bullets) {
-      if (!b.active) continue;
+      if (!b.active || b.ghost) continue;
       let hitWall = false, reflectX = false, reflectY = false;
 
       if (b.x <= WALL_THICKNESS) { hitWall = true; reflectX = true; b.x = WALL_THICKNESS; }
@@ -97,6 +97,10 @@ export class Room {
           b.bounces++;
           if (reflectX) b.vx = -b.vx;
           if (reflectY) b.vy = -b.vy;
+          // 彈跳大師 Synergy：反彈時分裂
+          if (b.splitOnBounce && !b.isSplitChild) b.pool?.spawnSplitChildren(b, null);
+        } else if (b.pool) {
+          b.pool.killBullet(b, this.enemies);
         } else {
           b.active = false;
         }

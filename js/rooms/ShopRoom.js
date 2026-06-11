@@ -32,6 +32,13 @@ export class ShopItem extends Entity {
     return this.kind === "item" ? ItemDatabase[this.itemId]?.name : KIND_LABEL[this.kind];
   }
 
+  // 漁市打折（97）：道具價格 × gm.shopPriceMult
+  get effectivePrice() {
+    const gm = GameManager.getInstance();
+    const mult = this.kind === "item" ? (gm.shopPriceMult || 1) : 1;
+    return Math.ceil(this.price * mult);
+  }
+
   update(dt, player, input) {
     if (!this.active) return;
     if (this.deniedTimer > 0) this.deniedTimer -= dt;
@@ -47,19 +54,19 @@ export class ShopItem extends Entity {
 
   tryBuy(player) {
     const gm = GameManager.getInstance();
-    // TODO Task 12：Steam打折 道具 → 價格折半
-    if (gm.coins < this.price) {
+    const price = this.effectivePrice;
+    if (gm.coins < price) {
       this.deniedTimer = DENIED_FRAMES;
       return;
     }
-    gm.coins -= this.price;
+    gm.coins -= price;
     switch (this.kind) {
       case "item":  gm.itemManager?.pickup(this.itemId); break;
       case "heart": player.heal(1); break;
       case "bomb":  gm.bombs += 1; break;
       case "key":   gm.keys += 1; break;
     }
-    EventBus.emit("shopPurchase", { kind: this.kind, price: this.price });
+    EventBus.emit("shopPurchase", { kind: this.kind, price });
     this.active = false;
   }
 
@@ -128,7 +135,7 @@ export class ShopItem extends Entity {
     ctx.fillText(this.label ?? "?", cx, this.y - 12);
     ctx.fillStyle = "#b8860b";
     ctx.font = "bold 13px sans-serif";
-    ctx.fillText(`$${this.price}`, cx, this.y + this.w + 28);
+    ctx.fillText(`$${this.effectivePrice}`, cx, this.y + this.w + 28);
 
     // 互動提示
     if (this.deniedTimer > 0) {

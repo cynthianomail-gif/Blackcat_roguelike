@@ -1,9 +1,11 @@
 // =====================================================
 // HUD.js — 戰鬥資訊列（Camera reset 後繪製，不受震動影響）
 // 血量 (10,10)｜EX 條 (10,60)｜金幣/炸彈/鑰匙 (10,90)
+// 主動道具（右上角）：名稱 + 充能格，滿格時亮框
 // Boss 血條：頂端中央 (200,10) 寬 500
 // =====================================================
-import { EX_ENERGY_MAX } from "../core/Constants.js";
+import { EX_ENERGY_MAX, CANVAS_W } from "../core/Constants.js";
+import { ItemDatabase } from "../items/ItemDatabase.js";
 
 const HEART_SIZE = 22;
 const HEART_GAP = 6;
@@ -25,8 +27,58 @@ export class HUD {
     this.drawHearts(ctx);
     this.drawEXBar(ctx);
     this.drawResources(ctx);
+    this.drawActiveItem(ctx);
     this.drawBossBar(ctx);
     ctx.restore();
+  }
+
+  // ── 主動道具欄（右上角）：方框 + 名稱 + 充能格 ──
+  drawActiveItem(ctx) {
+    const item = ItemDatabase[this.gm.activeItem];
+    if (!item) return;
+    const boxS = 44;
+    const x = CANVAS_W - boxS - 14, y = 10;
+    const charge = this.gm.activeItemCharge;
+    const full = charge >= item.chargeMax;
+
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.beginPath();
+    ctx.roundRect(x - 3, y - 3, boxS + 6, boxS + 6, 6);
+    ctx.fill();
+    ctx.fillStyle = "#2a2a2a";
+    ctx.beginPath();
+    ctx.roundRect(x, y, boxS, boxS, 4);
+    ctx.fill();
+    // 滿充能：金框閃爍
+    if (full) {
+      ctx.strokeStyle = Math.floor(this.blinkTimer / 15) % 2 === 0 ? "#ffd75e" : "#b8860b";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(x, y, boxS, boxS, 4);
+      ctx.stroke();
+    }
+    // 道具首字
+    ctx.fillStyle = full ? "#ffd75e" : "#888";
+    ctx.font = "bold 22px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(item.name[0], x + boxS / 2, y + boxS / 2 + 8);
+
+    // 充能格（直列在框左側）
+    const pipH = Math.max(4, (boxS - (item.chargeMax - 1) * 2) / item.chargeMax);
+    for (let i = 0; i < item.chargeMax; i++) {
+      const py = y + boxS - (i + 1) * pipH - i * 2;
+      ctx.fillStyle = i < charge ? "#ffd75e" : "#3a3a3a";
+      ctx.fillRect(x - 9, py, 6, pipH);
+    }
+
+    // 名稱 + 操作提示
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillText(item.name, x + boxS / 2, y + boxS + 14);
+    if (full) {
+      ctx.fillStyle = "#ffd75e";
+      ctx.fillText("[E]", x + boxS / 2, y + boxS + 27);
+    }
   }
 
   // ── 血量：愛心 × maxHP；紅=有血（支援半顆）、灰=空 ──

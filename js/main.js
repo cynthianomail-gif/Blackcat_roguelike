@@ -11,6 +11,7 @@ import { EventBus } from "./core/EventBus.js";
 import { Player } from "./entities/Player.js";
 import { BulletPool } from "./entities/BulletPool.js";
 import { ItemManager } from "./items/ItemManager.js";
+import { FamiliarManager } from "./items/Familiar.js";
 import { SynergyAlert } from "./ui/SynergyAlert.js";
 import { HUD } from "./ui/HUD.js";
 import { MapDisplay } from "./ui/MapDisplay.js";
@@ -36,6 +37,10 @@ gm.player = player;
 const itemManager = new ItemManager(player, gm);
 gm.itemManager = itemManager;
 
+// ── 跟班系統（Task 12）──
+const familiarManager = new FamiliarManager(player, bulletPool);
+gm.familiarManager = familiarManager;
+
 // ── UI 層 ──
 const synergyAlert = new SynergyAlert();
 const hud = new HUD(player, gm);
@@ -51,6 +56,7 @@ gm.currentRoom = floor.currentRoom;
 renderer.scene.camera = camera;
 renderer.scene.player = player;
 renderer.scene.bullets = bulletPool.bullets;
+renderer.scene.familiars = familiarManager.familiars;
 renderer.scene.synergyAlert = synergyAlert;
 renderer.scene.hud = hud;
 renderer.scene.mapDisplay = mapDisplay;
@@ -100,6 +106,12 @@ function update(dt) {
     room.update(dt, player, input);
     room.handleBulletCollisions(bulletPool.bullets);
 
+    // E 鍵：主動道具（靠近商品/交易時讓位給購買互動）
+    if (input.usePressed && player.active) {
+      const nearInteractable = room.items.some(i => i.active && i.playerNear);
+      if (!nearInteractable) itemManager.useActive(room);
+    }
+
     // 門觸發 → 房間切換
     const dir = room.checkDoorTransition(player);
     if (dir) {
@@ -112,7 +124,11 @@ function update(dt) {
   }
 
   const enemies = renderer.scene.enemies || [];
-  bulletPool.update(dt, enemies.filter(e => e.active), player);
+  const activeEnemies = enemies.filter(e => e.active);
+  bulletPool.update(dt, activeEnemies, player);
+  player.updateLaser(dt, activeEnemies);          // 雷射眼/永恆凝視
+  familiarManager.update(dt, floor.currentRoom, activeEnemies);
+  itemManager.update(dt, input, floor.currentRoom); // 每幀道具邏輯
   synergyAlert.update(dt);
   hud.update(dt);
   itemDisplay.update(dt);
@@ -135,6 +151,22 @@ EventBus.on("enemyDied", (e) => console.log("enemyDied:", e.constructor.name));
 let floorTransitionTimer = -1;
 EventBus.on("bossDied", () => { floorTransitionTimer = 48; });
 
+// 地下通道（79）：立即跳到下一層
+EventBus.on("requestNextFloor", () => goToNextFloor());
+
+// 貓式傳送（74）：跳到指定格子的房間
+EventBus.on("requestTeleport", ({ x, y }) => {
+  const r = floor.roomAt(x, y);
+  if (!r) return;
+  floor.currentPos = { x, y };
+  r.enter();
+  player.x = CANVAS_W / 2 - player.w / 2;
+  player.y = FLOOR_Y - PLAYER_H;
+  player.vy = 0;
+  bulletPool.clear();
+  syncSceneToRoom();
+});
+
 // 下一層：F1-F6 → F7（最終 Boss 層）→ 通關 RUN_CLEAR
 const FINAL_FLOOR = 7;
 function goToNextFloor() {
@@ -152,12 +184,13 @@ function goToNextFloor() {
   player.y = FLOOR_Y - PLAYER_H;
   player.vy = 0;
   bulletPool.clear();
+  itemManager.onFloorChanged(floor); // 戰鬥本能重置 + 地圖道具重新套用
   syncSceneToRoom();
   state.change(STATES.EXPLORING);
 }
 
 // 驗證/除錯用全局掛載
-window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, fps: 0, STATES };
+window.game = { renderer, camera, state, gm, input, player, bulletPool, itemManager, familiarManager, fps: 0, STATES };
 // 測試工具：直接跳到指定格子的房間
 window.game.gotoRoom = (x, y) => {
   const r = floor.roomAt(x, y);
