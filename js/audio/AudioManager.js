@@ -87,7 +87,8 @@ export class AudioManager {
   onFloorChange(floorNum) {
     const tracks = { 1:"bgm_f1_rooftop", 2:"bgm_f2_kitchen",
       3:"bgm_f3_alley", 4:"bgm_f4_warehouse",
-      5:"bgm_f5_library", 6:"bgm_f6_shrine" };
+      5:"bgm_f5_library", 6:"bgm_f6_shrine",
+      7:"bgm_f6_shrine" }; // F7 最終層沿用神社曲（同背景沿用 F6 的邏輯）
     this.playBGM(tracks[floorNum] || "bgm_f1_rooftop");
   }
   onBossStart()  { this.playBGM("bgm_boss"); }
