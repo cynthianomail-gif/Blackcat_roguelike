@@ -29,6 +29,21 @@ export const ASSETS = {
   boss_gateguardian:"assets/images/sprites/boss_gateguardian.png",
   boss_chaoswanderer:"assets/images/sprites/boss_chaoswanderer.png",
 
+  // M7 ── Boss 攻擊幀
+  boss_feathertop_atk:  "assets/images/sprites/boss_feathertop_atk.png",
+  boss_antenna_atk:     "assets/images/sprites/boss_antenna_atk.png",
+  boss_roachmaster_atk: "assets/images/sprites/boss_roachmaster_atk.png",
+  boss_potfiend_atk:    "assets/images/sprites/boss_potfiend_atk.png",
+  boss_dogfather_atk:   "assets/images/sprites/boss_dogfather_atk.png",
+  boss_raincat_atk:     "assets/images/sprites/boss_raincat_atk.png",
+  boss_ratking_atk:     "assets/images/sprites/boss_ratking_atk.png",
+  boss_steamroller_atk: "assets/images/sprites/boss_steamroller_atk.png",
+  boss_tomegod_atk:     "assets/images/sprites/boss_tomegod_atk.png",
+  boss_librarian_atk:   "assets/images/sprites/boss_librarian_atk.png",
+  boss_ninetails_atk:   "assets/images/sprites/boss_ninetails_atk.png",
+  boss_gateguardian_atk:"assets/images/sprites/boss_gateguardian_atk.png",
+  boss_chaoswanderer_atk:"assets/images/sprites/boss_chaoswanderer_atk.png",
+
   // M4 ── 18 個敵人剪影（每層 3 個）
   enemy_pigeon:    "assets/images/sprites/enemy_pigeon.png",
   enemy_sparrow:   "assets/images/sprites/enemy_sparrow.png",
