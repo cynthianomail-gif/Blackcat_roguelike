@@ -3,7 +3,7 @@
 // 監聽 "itemPickup"：道具名稱 + 說明，2 秒後自動消失
 // =====================================================
 import { EventBus } from "../core/EventBus.js";
-import { CANVAS_W } from "../core/Constants.js";
+import { CANVAS_W, UI_FONT } from "../core/Constants.js";
 
 const SHOW_FRAMES = 120; // 2 秒
 const FADE_FRAMES = 20;
@@ -37,11 +37,11 @@ export class ItemDisplay {
     // 名稱
     ctx.textAlign = "center";
     ctx.fillStyle = "#ffd75e";
-    ctx.font = "bold 18px sans-serif";
+    ctx.font = `bold 18px ${UI_FONT}`;
     ctx.fillText(this.item.name, cx, y);
     // 說明
     ctx.fillStyle = "#fff";
-    ctx.font = "13px sans-serif";
+    ctx.font = `13px ${UI_FONT}`;
     ctx.fillText(this.item.description, cx, y + 22);
     ctx.restore();
   }

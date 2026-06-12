@@ -7,7 +7,7 @@ import { Entity, rectsOverlap } from "../entities/Entity.js";
 import { GameManager } from "../core/GameManager.js";
 import { EventBus } from "../core/EventBus.js";
 import { ItemDatabase } from "../items/ItemDatabase.js";
-import { CANVAS_W, FLOOR_Y } from "../core/Constants.js";
+import { CANVAS_W, FLOOR_Y, UI_FONT } from "../core/Constants.js";
 
 const HINT_RANGE = 36;
 
@@ -71,10 +71,10 @@ export class DevilDeal extends Entity {
     // 名稱 + 代價
     ctx.textAlign = "center";
     ctx.fillStyle = "#1a1a1a";
-    ctx.font = "bold 12px sans-serif";
+    ctx.font = `bold 12px ${UI_FONT}`;
     ctx.fillText(this.item?.name ?? "?", cx, this.y - 14);
     ctx.fillStyle = "#c8102e";
-    ctx.font = "bold 13px sans-serif";
+    ctx.font = `bold 13px ${UI_FONT}`;
     ctx.fillText("代價：1 格最大血量", cx, this.y + this.h + 26);
 
     // 對話方塊
@@ -85,7 +85,7 @@ export class DevilDeal extends Entity {
       ctx.roundRect(cx - 150, this.y - 64, 300, 30, 6);
       ctx.fill();
       ctx.fillStyle = this.refused ? "#999" : "#ffd75e";
-      ctx.font = "bold 13px sans-serif";
+      ctx.font = `bold 13px ${UI_FONT}`;
       ctx.fillText(msg, cx, this.y - 44);
     }
     ctx.restore();

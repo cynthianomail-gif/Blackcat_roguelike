@@ -14,6 +14,9 @@ export const DOOR_W = 60;           // 門寬度（px）
 export const DOOR_H = 80;           // 門高度（px）
 export const TILE_SIZE = 40;        // 地板磚塊大小（px）
 
+// ── M7 UI 字型（jf open 粉圓，OFL；boot 以 FontFace 載入）──
+export const UI_FONT = "'openhuninn', sans-serif";
+
 // ── 2.2 玩家 ─────────────────────────────────────────
 export const PLAYER_SPEED = 5;             // 基礎移速（px/frame @60fps）
 export const PLAYER_JUMP_FORCE = -13;      // 跳躍初速（負值=向上）

@@ -4,7 +4,7 @@
 // 特殊房間圖示：B=Boss T=道具 S=商店 ?=隱藏 C=挑戰 D=魔鬼 A=天使
 // =====================================================
 import {
-  CANVAS_W, CANVAS_H, GRID_W, GRID_H, ROOM_TYPES,
+  CANVAS_W, CANVAS_H, GRID_W, GRID_H, ROOM_TYPES, UI_FONT,
 } from "../core/Constants.js";
 
 const CELL = 42, GAP = 5;
@@ -42,7 +42,7 @@ export class MapDisplay {
 
     // 標題
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px sans-serif";
+    ctx.font = `bold 16px ${UI_FONT}`;
     ctx.textAlign = "center";
     ctx.fillText(`F${this.floor.floorNum} 地圖`, CANVAS_W / 2, originY - 22);
 
@@ -70,7 +70,7 @@ export class MapDisplay {
         const icon = TYPE_ICON[room.type];
         if (icon && (room.isRevealed || room.type !== ROOM_TYPES.SECRET)) {
           ctx.fillStyle = icon.color;
-          ctx.font = "bold 18px sans-serif";
+          ctx.font = `bold 18px ${UI_FONT}`;
           ctx.fillText(icon.text, x + CELL / 2, y + CELL / 2 + 6);
         }
 

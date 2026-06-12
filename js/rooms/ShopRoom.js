@@ -10,6 +10,7 @@ import { EventBus } from "../core/EventBus.js";
 import { ItemDatabase, pickItemForFloor } from "../items/ItemDatabase.js";
 import {
   FLOOR_Y, SHOP_ITEM_PRICE_BASE, SHOP_HEART_PRICE, SHOP_BOMB_PRICE, SHOP_KEY_PRICE,
+  UI_FONT,
 } from "../core/Constants.js";
 
 const HINT_RANGE = 30;        // 觸發「E 購買」提示的額外距離
@@ -132,20 +133,20 @@ export class ShopItem extends Entity {
     // 名稱 + 價格
     ctx.textAlign = "center";
     ctx.fillStyle = "#1a1a1a";
-    ctx.font = "bold 12px sans-serif";
+    ctx.font = `bold 12px ${UI_FONT}`;
     ctx.fillText(this.label ?? "?", cx, this.y - 12);
     ctx.fillStyle = "#b8860b";
-    ctx.font = "bold 13px sans-serif";
+    ctx.font = `bold 13px ${UI_FONT}`;
     ctx.fillText(`$${this.effectivePrice}`, cx, this.y + this.w + 28);
 
     // 互動提示
     if (this.deniedTimer > 0) {
       ctx.fillStyle = "#c8102e";
-      ctx.font = "bold 13px sans-serif";
+      ctx.font = `bold 13px ${UI_FONT}`;
       ctx.fillText("小魚乾不足", cx, this.y - 44);
     } else if (this.playerNear) {
       ctx.fillStyle = "#fff";
-      ctx.font = "bold 13px sans-serif";
+      ctx.font = `bold 13px ${UI_FONT}`;
       ctx.strokeStyle = "rgba(0,0,0,0.7)";
       ctx.lineWidth = 3;
       ctx.strokeText("E 購買", cx, this.y - 44);

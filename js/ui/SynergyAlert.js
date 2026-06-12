@@ -3,7 +3,7 @@
 // 監聽 "synergyActivated"：「✦ 組合：XXX 觸發！」
 // =====================================================
 import { EventBus } from "../core/EventBus.js";
-import { CANVAS_W } from "../core/Constants.js";
+import { CANVAS_W, UI_FONT } from "../core/Constants.js";
 
 const SHOW_FRAMES = 180;  // 3 秒
 const FADE_FRAMES = 30;   // 最後 0.5 秒淡出
@@ -28,7 +28,7 @@ export class SynergyAlert {
     const alpha = Math.min(1, this.timer / FADE_FRAMES);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = "bold 18px sans-serif";
+    ctx.font = `bold 18px ${UI_FONT}`;
     ctx.textAlign = "right";
     // 描邊金字（深淺背景都清晰）
     ctx.lineWidth = 4;

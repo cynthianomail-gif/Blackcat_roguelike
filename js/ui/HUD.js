@@ -4,7 +4,7 @@
 // 主動道具（右上角）：名稱 + 充能格，滿格時亮框
 // Boss 血條：頂端中央 (200,10) 寬 500
 // =====================================================
-import { EX_ENERGY_MAX, CANVAS_W } from "../core/Constants.js";
+import { EX_ENERGY_MAX, CANVAS_W, UI_FONT } from "../core/Constants.js";
 import { ItemDatabase } from "../items/ItemDatabase.js";
 
 const HEART_SIZE = 22;
@@ -59,7 +59,7 @@ export class HUD {
     }
     // 道具首字
     ctx.fillStyle = full ? "#ffd75e" : "#888";
-    ctx.font = "bold 22px sans-serif";
+    ctx.font = `bold 22px ${UI_FONT}`;
     ctx.textAlign = "center";
     ctx.fillText(item.name[0], x + boxS / 2, y + boxS / 2 + 8);
 
@@ -73,7 +73,7 @@ export class HUD {
 
     // 名稱 + 操作提示
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 11px sans-serif";
+    ctx.font = `bold 11px ${UI_FONT}`;
     ctx.fillText(item.name, x + boxS / 2, y + boxS + 14);
     if (full) {
       ctx.fillStyle = "#ffd75e";
@@ -139,7 +139,7 @@ export class HUD {
 
     if (ratio >= 1 && Math.floor(this.blinkTimer / EX_BLINK_INTERVAL) % 2 === 0) {
       ctx.fillStyle = "#ffd75e";
-      ctx.font = "bold 14px sans-serif";
+      ctx.font = `bold 14px ${UI_FONT}`;
       ctx.textAlign = "left";
       ctx.fillText("EX!", 10 + EX_BAR_W + 10, 60 + EX_BAR_H - 1);
     }
@@ -148,7 +148,7 @@ export class HUD {
   // ── 金幣/炸彈/鑰匙：小圖示 + 數字 ──
   drawResources(ctx) {
     const y = 90;
-    ctx.font = "bold 14px sans-serif";
+    ctx.font = `bold 14px ${UI_FONT}`;
     ctx.textAlign = "left";
 
     // 金幣（金色圓）
@@ -204,7 +204,7 @@ export class HUD {
     ctx.fillStyle = boss.phase === 2 ? "#ff5e3a" : "#c8102e";
     ctx.fillRect(x, y, w * (boss.hp / boss.maxHP), h);
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 12px sans-serif";
+    ctx.font = `bold 12px ${UI_FONT}`;
     ctx.textAlign = "center";
     ctx.fillText(boss.pattern.name, x + w / 2, y + h + 16);
   }

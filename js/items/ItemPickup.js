@@ -6,6 +6,7 @@
 import { Entity, rectsOverlap } from "../entities/Entity.js";
 import { GameManager } from "../core/GameManager.js";
 import { ItemDatabase } from "./ItemDatabase.js";
+import { UI_FONT } from "../core/Constants.js";
 
 const RARITY_COLOR = {
   common: "#9ad1ff",    // 藍
@@ -66,7 +67,7 @@ export class ItemPickup extends Entity {
     // 名稱
     if (item) {
       ctx.fillStyle = "#1a1a1a";
-      ctx.font = "bold 13px sans-serif";
+      ctx.font = `bold 13px ${UI_FONT}`;
       ctx.textAlign = "center";
       ctx.fillText(item.name, cx, this.y - 10 + bobY);
     }
