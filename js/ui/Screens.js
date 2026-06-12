@@ -5,6 +5,7 @@
 import { STATES } from "../core/StateManager.js";
 import { SaveManager } from "../core/SaveManager.js";
 import { CANVAS_W, CANVAS_H, UI_FONT } from "../core/Constants.js";
+import { getAsset } from "../render/AssetLoader.js";
 
 export class Screens {
   constructor(state, gm) {
@@ -31,40 +32,55 @@ export class Screens {
 
   blinkOn() { return Math.floor(this.blinkTimer / 30) % 2 === 0; }
 
-  // 主選單：標題 + 黑貓剪影 + 最高紀錄 + 開始提示
+  // 主選單：key art（無圖退回幾何黑貓）+ 標題層次陰影 + 最高紀錄 + 開始提示
   drawMenu(ctx) {
     ctx.save();
-    this.drawBackdrop(ctx, 0.92);
     const cx = CANVAS_W / 2;
+    const art = getAsset("bg_keyart");
+    if (art) {
+      // cover-fit 滿版置中
+      const scale = Math.max(CANVAS_W / art.width, CANVAS_H / art.height);
+      ctx.drawImage(art, (CANVAS_W - art.width * scale) / 2,
+                    (CANVAS_H - art.height * scale) / 2,
+                    art.width * scale, art.height * scale);
+      const veil = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+      veil.addColorStop(0, "rgba(8,8,12,0.35)");   // 上方壓一點讓標題浮出
+      veil.addColorStop(0.5, "rgba(8,8,12,0)");
+      veil.addColorStop(1, "rgba(8,8,12,0.45)");   // 下方供操作說明
+      ctx.fillStyle = veil;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    } else {
+      this.drawBackdrop(ctx, 0.92);
+      this.drawCatSilhouette(ctx, cx, 270);        // 無圖 fallback 保留
+    }
 
-    // 標題
-    ctx.fillStyle = "#fff";
-    ctx.font = `bold 52px ${UI_FONT}`;
+    // 標題：層次陰影
     ctx.textAlign = "center";
-    ctx.fillText("黑貓流浪記", cx, 150);
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.font = `bold 54px ${UI_FONT}`;
+    ctx.fillText("黑貓流浪記", cx + 3, 123);
+    ctx.fillStyle = "#fff";
+    ctx.fillText("黑貓流浪記", cx, 120);
     ctx.font = `16px ${UI_FONT}`;
-    ctx.fillStyle = "#9a9a9a";
-    ctx.fillText("Black Cat Wanderer", cx, 182);
+    ctx.fillStyle = "#c9d4dc";
+    ctx.fillText("Black Cat Wanderer", cx, 150);
 
-    // 黑貓剪影（坐姿 + 紅領結）
-    this.drawCatSilhouette(ctx, cx, 270);
-
-    // 最高紀錄
+    // 最高紀錄（下半部 veil 區）
     const best = SaveManager.getBestFloor();
     if (best > 0) {
       ctx.fillStyle = "#ffd75e";
       ctx.font = `bold 18px ${UI_FONT}`;
-      ctx.fillText(`最高抵達：F${best}`, cx, 360);
+      ctx.fillText(`最高抵達：F${best}`, cx, 388);
     }
 
     if (this.blinkOn()) {
       ctx.fillStyle = "#fff";
       ctx.font = `bold 20px ${UI_FONT}`;
-      ctx.fillText("按 Enter 開始流浪", cx, 410);
+      ctx.fillText("按 Enter 開始流浪", cx, 424);
     }
     ctx.font = `13px ${UI_FONT}`;
-    ctx.fillStyle = "#777";
-    ctx.fillText("A/D 移動  W 跳躍  S 趴下（平台上+W 下穿）  J 吐毛球  L 必殺  Shift 衝刺  B 炸彈  E 道具  Tab 地圖", cx, 460);
+    ctx.fillStyle = "#c9d4dc";
+    ctx.fillText("A/D 移動  W 跳躍  S 趴下（平台上+W 下穿）  J 吐毛球  L 必殺  Shift 衝刺  B 炸彈  E 道具  Tab 地圖", cx, 462);
     ctx.restore();
   }
 
@@ -117,6 +133,11 @@ export class Screens {
     ctx.fillStyle = "#c8102e";
     ctx.font = `bold 44px ${UI_FONT}`;
     ctx.fillText("九命用盡…", cx, 180);
+    ctx.strokeStyle = "rgba(255,215,94,0.5)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 120, 205); ctx.lineTo(cx + 120, 205);
+    ctx.stroke();
     ctx.fillStyle = "#fff";
     ctx.font = `bold 20px ${UI_FONT}`;
     ctx.fillText(`本局抵達：F${this.gm.floor}`, cx, 250);
@@ -141,6 +162,11 @@ export class Screens {
     ctx.fillStyle = "#ffd75e";
     ctx.font = `bold 44px ${UI_FONT}`;
     ctx.fillText("流浪結束，找到歸宿！", cx, 180);
+    ctx.strokeStyle = "rgba(255,215,94,0.5)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 120, 205); ctx.lineTo(cx + 120, 205);
+    ctx.stroke();
     ctx.fillStyle = "#fff";
     ctx.font = `bold 20px ${UI_FONT}`;
     ctx.fillText("擊敗混沌流浪之神，全 7 層通關", cx, 250);

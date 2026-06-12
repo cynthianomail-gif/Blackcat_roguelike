@@ -71,6 +71,8 @@ export const ASSETS = {
   bg_f4: "assets/images/backgrounds/bg_f4.png",
   bg_f5: "assets/images/backgrounds/bg_f5.png",
   bg_f6: "assets/images/backgrounds/bg_f6.png",
+
+  bg_keyart: "assets/images/backgrounds/bg_keyart.png", // M7 主選單 key art
 };
 
 let loaded = {};
