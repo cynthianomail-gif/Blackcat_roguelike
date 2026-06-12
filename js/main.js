@@ -5,6 +5,7 @@ import { Renderer } from "./render/Renderer.js";
 import { Camera } from "./render/Camera.js";
 import { ParallaxBackground } from "./render/Background.js";
 import { Particles } from "./render/Particles.js";
+import { TransitionFX } from "./render/TransitionFX.js";
 import { loadAllAssets } from "./render/AssetLoader.js";
 import { GameManager } from "./core/GameManager.js";
 import { StateManager, STATES } from "./core/StateManager.js";
@@ -112,6 +113,12 @@ renderer.scene.mapDisplay = mapDisplay;
 renderer.scene.itemDisplay = itemDisplay;
 renderer.scene.screens = screens;
 renderer.scene.particles = Particles;
+
+// ── M7 轉場（換房黑幕淡出 + 樓層字卡）──
+const transitionFX = new TransitionFX();
+renderer.scene.transition = transitionFX;
+EventBus.on("roomChanged", () => transitionFX.onRoomChanged());
+EventBus.on("floorChanged", (n) => transitionFX.onFloorChanged(n));
 mapDisplay.floor = floor;
 
 function syncSceneToRoom() {
@@ -150,6 +157,7 @@ function gameLoop(timestamp) {
 
 function update(dt) {
   screens.update(dt);
+  transitionFX.update(dt); // 狀態閘門前：暫停/選單時字卡也要能淡完
 
   // ── 全螢幕狀態閘門：選單/死亡/通關/暫停時凍結遊戲 ──
   if (state.is(STATES.MAIN_MENU)) {

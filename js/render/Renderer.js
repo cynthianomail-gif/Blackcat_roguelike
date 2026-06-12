@@ -15,7 +15,7 @@ export class Renderer {
       familiars: [], enemies: [], boss: null,
       bullets: [], enemyBullets: [], bossBullets: [],
       hud: null, mapDisplay: null, itemDisplay: null, synergyAlert: null,
-      background: null, screens: null, particles: null,
+      background: null, screens: null, particles: null, transition: null,
     };
   }
 
@@ -77,6 +77,9 @@ export class Renderer {
     s.mapDisplay?.draw?.(ctx);
     s.itemDisplay?.drawOverlay?.(ctx);
     s.synergyAlert?.draw?.(ctx);
+
+    // 17.5 轉場層（黑幕/字卡蓋住場景與 HUD，但在全螢幕覆蓋之下）
+    s.transition?.draw?.(ctx);
 
     // 18. 全螢幕覆蓋（主選單/死亡/通關/暫停）
     s.screens?.draw?.(ctx);

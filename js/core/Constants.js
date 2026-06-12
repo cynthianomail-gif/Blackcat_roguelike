@@ -103,3 +103,9 @@ export const BOSS_PHASE2_THRESHOLD = 0.5; // 血量降至 50% 觸發 Phase 2
 export const BOSS_HIT_FLASH_FRAMES = 3;   // 受傷白閃持續幀數
 export const BOSS_DEATH_DURATION = 40;    // 死亡縮放動畫幀數
 export const BOSS_REWARD_COINS = [5, 8, 8, 12, 12, 15]; // 各層 Boss 金幣獎勵
+
+// ── M7 樓層顯示名（轉場字卡）──
+export const FLOOR_NAMES = {
+  1: "陽光屋頂", 2: "深夜廚房", 3: "雨夜暗巷",
+  4: "廢棄倉庫", 5: "神秘圖書館", 6: "月光神社", 7: "流浪終點",
+};
