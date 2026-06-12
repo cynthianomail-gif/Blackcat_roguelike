@@ -6,8 +6,9 @@ import { EventBus } from "../core/EventBus.js";
 import { rectsOverlap } from "../entities/Entity.js";
 import { Door } from "./Door.js";
 import {
-  CANVAS_W, CANVAS_H, WALL_THICKNESS, FLOOR_Y, TILE_SIZE, ROOM_TYPES,
+  CANVAS_W, CANVAS_H, WALL_THICKNESS, FLOOR_Y, ROOM_TYPES,
 } from "../core/Constants.js";
+import { frameLayersFor } from "../render/FrameSilhouette.js";
 
 const CEILING_Y = WALL_THICKNESS;
 
@@ -137,14 +138,8 @@ export class Room {
 
   // ── 渲染（依 Renderer 管線分段呼叫）─────────────────
   drawFloor(ctx) {
-    // BADLAND 式：地板屬於前景平面 → 純黑；背景整張亮彩發光
-    ctx.fillStyle = "#101014";
-    ctx.fillRect(0, FLOOR_Y, CANVAS_W, CANVAS_H - FLOOR_Y);
-    ctx.strokeStyle = "rgba(255,255,255,0.12)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < CANVAS_W; x += TILE_SIZE) {
-      ctx.strokeRect(x, FLOOR_Y, TILE_SIZE, CANVAS_H - FLOOR_Y);
-    }
+    // BADLAND 式：前景剪影層（M8 改 seed 烘焙的有機輪廓，無格線）
+    ctx.drawImage(frameLayersFor(this).floor, 0, 0);
     // 單向跳台（前景平面，與地板同層繪製）
     this.platforms.forEach(p => p.draw(ctx));
   }
@@ -159,11 +154,8 @@ export class Room {
   }
 
   drawWalls(ctx) {
-    ctx.fillStyle = "#101014"; // 前景平面同色（BADLAND 式）
-    ctx.fillRect(0, 0, WALL_THICKNESS, CANVAS_H);                       // 左牆
-    ctx.fillRect(CANVAS_W - WALL_THICKNESS, 0, WALL_THICKNESS, CANVAS_H); // 右牆
-    ctx.fillRect(0, 0, CANVAS_W, CEILING_Y);                            // 天花板
-    // 門開口蓋掉牆面：重畫門（門在 drawDoors 已畫，但牆蓋住了門 → 再補畫一次門區域）
-    Object.values(this.doors).forEach(d => d?.draw(ctx));
+    // 牆/天花板剪影層；門洞已在烘焙時挖好，
+    // 門光效（drawDoors，step 11）會從洞透出，不需再補畫門
+    ctx.drawImage(frameLayersFor(this).walls, 0, 0);
   }
 }
