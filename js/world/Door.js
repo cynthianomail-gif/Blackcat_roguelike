@@ -7,6 +7,7 @@ import { EventBus } from "../core/EventBus.js";
 import {
   CANVAS_W, CANVAS_H, WALL_THICKNESS, FLOOR_Y, DOOR_W, DOOR_H,
 } from "../core/Constants.js";
+import { traceOpening } from "../render/DoorShapes.js";
 
 const CEILING_Y = WALL_THICKNESS;
 
@@ -36,54 +37,120 @@ export class Door {
 
   close() { this.isOpen = false; }
 
-  // BADLAND 視覺語言：門開在純黑牆面上，必須靠亮色才可讀。
-  // 開啟＝通道透出暖光（金色脈動緣光）；鎖閉＝紅色發光閘欄。
+  // M8 視覺：門＝牆上挖的洞（FrameSilhouette 已挖好），光從裡面溢出。
+  // 開啟＝洞內暖光面＋光錐灑地＋飄浮光塵；鎖閉＝荊棘封口＋深處暗紅餘燼。
   draw(ctx) {
     const r = this.rect;
-    const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-    const pulse = 0.75 + Math.sin(performance.now() * 0.004) * 0.25; // 0.5~1.0 緩慢脈動
+    const now = performance.now();
+    const pulse = 0.75 + Math.sin(now * 0.004) * 0.25;
     ctx.save();
-    // 門洞本體（比牆更深的黑）
-    ctx.fillStyle = "#060608";
-    ctx.fillRect(r.x, r.y, r.w, r.h);
     if (this.isOpen) {
-      // 通道內透出的暖光（徑向漸層，由門內向外）
-      const glowR = Math.max(r.w, r.h) * 0.75;
-      const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, glowR);
-      grad.addColorStop(0, `rgba(255,219,120,${0.5 * pulse})`);
-      grad.addColorStop(0.6, `rgba(255,190,90,${0.18 * pulse})`);
-      grad.addColorStop(1, "rgba(255,190,90,0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(r.x, r.y, r.w, r.h);
-      // 金色緣光門框
-      ctx.strokeStyle = `rgba(255,225,150,${0.55 + 0.35 * pulse})`;
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = "#ffd75e";
-      ctx.shadowBlur = 8 * pulse;
-      ctx.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3);
+      this._drawSpill(ctx, pulse);
+      ctx.beginPath();
+      traceOpening(ctx, this.dir, r);
+      ctx.fillStyle = `rgba(253,243,220,${0.72 + 0.2 * pulse})`;
+      ctx.fill();
+      this._drawMotes(ctx, now);
     } else {
-      // 暗紅門框
-      ctx.strokeStyle = "rgba(200,16,46,0.35)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-      // 紅色發光閘欄
-      ctx.strokeStyle = `rgba(232,60,80,${0.65 + 0.25 * pulse})`;
-      ctx.lineWidth = 3;
-      ctx.shadowColor = "#c8102e";
-      ctx.shadowBlur = 6;
-      const bars = 4;
-      for (let i = 1; i <= bars; i++) {
-        ctx.beginPath();
-        if (this.dir === "E" || this.dir === "W") {
-          const y = r.y + (r.h / (bars + 1)) * i;
-          ctx.moveTo(r.x + 2, y); ctx.lineTo(r.x + r.w - 2, y);
-        } else {
-          const x = r.x + (r.w / (bars + 1)) * i;
-          ctx.moveTo(x, r.y + 2); ctx.lineTo(x, r.y + r.h - 2);
-        }
-        ctx.stroke();
-      }
+      ctx.beginPath();
+      traceOpening(ctx, this.dir, r);
+      ctx.fillStyle = "#140a10";
+      ctx.fill();
+      ctx.clip(); // 餘燼與荊棘都限制在洞內
+      const cx = r.x + r.w / 2;
+      const cy = r.y + r.h * (this.dir === "N" ? 0.35 : 0.6);
+      const g = ctx.createRadialGradient(cx, cy, 1, cx, cy, Math.max(r.w, r.h) * 0.4);
+      g.addColorStop(0, `rgba(180,40,40,${0.4 * pulse})`);
+      g.addColorStop(1, "rgba(180,40,40,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      this._drawBrambles(ctx);
     }
     ctx.restore();
+  }
+
+  // 光錐＋落地光池（「這是通道」的主要讀法）
+  _drawSpill(ctx, pulse) {
+    const r = this.rect;
+    ctx.fillStyle = `rgba(255,228,150,${0.16 * pulse})`;
+    ctx.beginPath();
+    if (this.dir === "W") {
+      ctx.moveTo(WALL_THICKNESS, FLOOR_Y - 64);
+      ctx.lineTo(WALL_THICKNESS + 110, FLOOR_Y);
+      ctx.lineTo(WALL_THICKNESS, FLOOR_Y);
+    } else if (this.dir === "E") {
+      ctx.moveTo(CANVAS_W - WALL_THICKNESS, FLOOR_Y - 64);
+      ctx.lineTo(CANVAS_W - WALL_THICKNESS - 110, FLOOR_Y);
+      ctx.lineTo(CANVAS_W - WALL_THICKNESS, FLOOR_Y);
+    } else if (this.dir === "N") {
+      ctx.moveTo(r.x + 8, r.y + r.h);
+      ctx.lineTo(r.x + r.w - 8, r.y + r.h);
+      ctx.lineTo(r.x + r.w + 16, r.y + r.h + 96);
+      ctx.lineTo(r.x - 16, r.y + r.h + 96);
+    } else { // S：光由下往上透
+      ctx.moveTo(r.x + 6, r.y);
+      ctx.lineTo(r.x + r.w - 6, r.y);
+      ctx.lineTo(r.x + r.w - 14, r.y - 34);
+      ctx.lineTo(r.x + 14, r.y - 34);
+    }
+    ctx.closePath();
+    ctx.fill();
+    if (this.dir === "W" || this.dir === "E") {
+      const px = this.dir === "W" ? WALL_THICKNESS + 48 : CANVAS_W - WALL_THICKNESS - 48;
+      ctx.fillStyle = `rgba(255,236,170,${0.22 * pulse})`;
+      ctx.beginPath();
+      ctx.ellipse(px, FLOOR_Y, 56, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 洞口光塵：3~4 粒緩慢上飄的微光點（純時間函數，無狀態）
+  _drawMotes(ctx, now) {
+    const r = this.rect;
+    const t = now * 0.001;
+    let bx, by; // 光塵基準點（洞口靠遊戲區側）
+    switch (this.dir) {
+      case "W": bx = WALL_THICKNESS + 14; by = FLOOR_Y - 8; break;
+      case "E": bx = CANVAS_W - WALL_THICKNESS - 14; by = FLOOR_Y - 8; break;
+      case "N": bx = r.x + r.w / 2; by = r.y + r.h + 40; break;
+      default:  bx = r.x + r.w / 2; by = r.y - 4; break; // S
+    }
+    ctx.fillStyle = "rgba(255,240,190,1)";
+    for (let i = 0; i < 4; i++) {
+      const rise = (t * 14 + i * 23) % 64;
+      const x = bx + Math.sin(t * 0.8 + i * 2.4) * (8 + i * 5);
+      const y = by - rise;
+      ctx.globalAlpha = 0.7 * (1 - rise / 64);
+      ctx.beginPath();
+      ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // 鎖門封口：交叉粗枝＋小刺，前景純黑（取代霓虹柵欄）
+  _drawBrambles(ctx) {
+    const r = this.rect;
+    ctx.strokeStyle = "#101014";
+    ctx.lineCap = "round";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(r.x + 4, r.y + r.h * 0.25);
+    ctx.lineTo(r.x + r.w - 4, r.y + r.h * 0.85);
+    ctx.moveTo(r.x + r.w - 4, r.y + r.h * 0.2);
+    ctx.lineTo(r.x + 4, r.y + r.h * 0.8);
+    ctx.stroke();
+    ctx.lineWidth = 2.5;
+    const thorns = [
+      [0.30, 0.42, -7, -5], [0.55, 0.62, 6, -6],
+      [0.72, 0.40, 5, 6],   [0.40, 0.72, -6, 5],
+    ];
+    ctx.beginPath();
+    for (const [fx, fy, dx, dy] of thorns) {
+      const x = r.x + r.w * fx, y = r.y + r.h * fy;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dx, y + dy);
+    }
+    ctx.stroke();
   }
 }
