@@ -10,6 +10,7 @@ export class Renderer {
     this.ctx = ctx;
     this.width = width;
     this.height = height;
+    this.pixelRatio = 1;
     // scene 物件由 main.js 組裝，各欄位可為 null（漸進式接線）
     this.scene = {
       camera: null, room: null, player: null,
@@ -24,8 +25,11 @@ export class Renderer {
     const { ctx } = this;
     const s = this.scene;
 
-    // 1. 清空畫布
-    ctx.clearRect(0, 0, this.width, this.height);
+    // 1. 重設變換並清空（物理像素）→ 套統一縮放（之後全部用邏輯座標）
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
+    ctx.imageSmoothingQuality = "high";
 
     // 2. 套用視角偏移
     s.camera?.apply(ctx);

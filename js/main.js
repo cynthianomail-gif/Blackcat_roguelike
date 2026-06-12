@@ -26,7 +26,7 @@ import { Audio } from "./audio/AudioManager.js";
 import { wireAudioEvents } from "./audio/AudioEvents.js";
 import { generateFloor } from "./world/RoomGenerator.js";
 import {
-  CANVAS_W, FLOOR_Y, PLAYER_H,
+  CANVAS_W, CANVAS_H, FLOOR_Y, PLAYER_H,
   COIN_DROP_CHANCE, HEART_DROP_CHANCE, BOMB_DROP_CHANCE, KEY_DROP_CHANCE,
 } from "./core/Constants.js";
 
@@ -34,6 +34,22 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const renderer = new Renderer(ctx, canvas.width, canvas.height);
+
+// ── 滿版：等比縮放鋪滿視窗（邏輯解析度 900×506 不變）──
+// 實際像素 = 邏輯尺寸 × scale × devicePixelRatio，由 Renderer 的
+// pixelRatio 統一放大，放大後線條/文字仍銳利。
+function fitCanvas() {
+  const scale = Math.min(window.innerWidth / CANVAS_W, window.innerHeight / CANVAS_H);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.style.width  = `${Math.floor(CANVAS_W * scale)}px`;
+  canvas.style.height = `${Math.floor(CANVAS_H * scale)}px`;
+  renderer.pixelRatio = Math.max(1, scale * dpr);
+  canvas.width  = Math.round(CANVAS_W * renderer.pixelRatio);
+  canvas.height = Math.round(CANVAS_H * renderer.pixelRatio);
+}
+window.addEventListener("resize", fitCanvas);
+fitCanvas();
+
 const camera = new Camera();
 const state = new StateManager();
 const input = new Input();

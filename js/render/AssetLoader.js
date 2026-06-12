@@ -61,9 +61,9 @@ export const ASSETS = {
 let loaded = {};
 
 // 原圖 2048px；角色/Boss 遊戲內最大顯示約 150px → 縮到 512；
-// 背景要鋪滿 900px 畫布（含視差超掃描）→ 留 1280。
+// 背景要鋪滿視窗（滿版等比縮放 + DPR 後解析度需求提高）→ 留 2048（原圖）。
 const MAX_DIM = 512;
-const MAX_DIM_BG = 1280;
+const MAX_DIM_BG = 2048;
 function downscale(img, maxDim = MAX_DIM) {
   if (Math.max(img.width, img.height) <= maxDim) return img;
   const s = maxDim / Math.max(img.width, img.height);
