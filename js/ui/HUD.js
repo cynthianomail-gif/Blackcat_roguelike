@@ -14,6 +14,7 @@ const EX_BAR_W = 150, EX_BAR_H = 12;
 const EX_BLINK_INTERVAL = 15; // EX 滿時「EX!」閃爍週期（幀）
 const HURT_PULSE_FRAMES = 18; // 受傷心跳時長（幀）
 const COIN_BOUNCE_FRAMES = 12; // 金幣數字彈跳時長（幀）
+const HEART_EMPTY_COLOR = "#4a4a4a"; // 空心底色（drawHeart 以此判斷不畫高光）
 
 export class HUD {
   constructor(player, gm) {
@@ -102,21 +103,22 @@ export class HUD {
       x: 10 + (i % PER_ROW) * (HEART_SIZE + HEART_GAP),
       y: 10 + Math.floor(i / PER_ROW) * ROW_H,
     });
-    // 心形縮放：受傷瞬間放大回彈；剩 1 心（無魂心）持續脈動
+    // 心形縮放：受傷瞬間放大回彈；剩 1 心（無魂心）持續脈動（恆 ≥1，避免縮小露出灰底環）
     const low = p.hp <= 1 && p.soulHearts <= 0;
     const beat = this.hurtPulse > 0 ? 1 + (this.hurtPulse / HURT_PULSE_FRAMES) * 0.25
-               : low ? 1 + Math.sin(this.blinkTimer * 0.18) * 0.08 : 1;
+               : low ? 1 + Math.abs(Math.sin(this.blinkTimer * 0.18)) * 0.08 : 1;
     for (let i = 0; i < p.maxHP; i++) {
       const { x, y } = slot(i);
       const filled = Math.max(0, Math.min(1, p.hp - i)); // 0 | 0.5 | 1
-      this.drawHeart(ctx, x, y, "#4a4a4a");              // 底：灰色空心
+      this.drawHeart(ctx, x, y, HEART_EMPTY_COLOR);      // 底：灰色空心
       if (filled > 0) this.drawHeart(ctx, x, y, "#c8102e", filled, beat);
     }
-    // 魂心（藍色）接在紅心後面
+    // 魂心（藍色）接在紅心後面；魂心優先扣血，受傷心跳也要跳（低血持續脈動仍只限紅心）
+    const soulBeat = this.hurtPulse > 0 ? beat : 1;
     for (let i = 0; i < Math.ceil(p.soulHearts); i++) {
       const { x, y } = slot(p.maxHP + i);
       const filled = Math.max(0, Math.min(1, p.soulHearts - i));
-      this.drawHeart(ctx, x, y, "#5a8fd1", filled);
+      this.drawHeart(ctx, x, y, "#5a8fd1", filled, soulBeat);
     }
   }
 
@@ -151,7 +153,7 @@ export class HUD {
     ctx.fillStyle = color;
     ctx.fill();
     // 滿心加左上高光點（灰色空心不加）
-    if (fillRatio >= 1 && color !== "#4a4a4a") {
+    if (fillRatio >= 1 && color !== HEART_EMPTY_COLOR) {
       ctx.fillStyle = "rgba(255,255,255,0.35)";
       ctx.beginPath();
       ctx.arc(x + s * 0.3, y + s * 0.26, s * 0.1, 0, Math.PI * 2);
