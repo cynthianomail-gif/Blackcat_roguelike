@@ -72,7 +72,7 @@ export const ASSETS = {
   bg_f5: "assets/images/backgrounds/bg_f5.png",
   bg_f6: "assets/images/backgrounds/bg_f6.png",
 
-  bg_keyart: "assets/images/backgrounds/bg_keyart.png", // M7 主選單 key art
+  bg_keyart: "assets/images/backgrounds/bg_keyart.jpg", // M7 主選單 key art（滿幅彩繪無透明需求，JPEG 135KB vs PNG 7.5MB）
 };
 
 let loaded = {};
