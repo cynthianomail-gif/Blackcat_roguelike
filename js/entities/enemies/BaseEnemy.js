@@ -32,6 +32,12 @@ export class BaseEnemy extends Entity {
     this.poisonFrames = 0;   // 中毒：每 60f 扣 poisonDmg
     this.poisonDmg = 0;
     this.poisonTick = 0;
+
+    // ── M7 程序式動畫（純繪製變換，不碰碰撞箱）──
+    this.animT = Math.random() * Math.PI * 2; // 個體相位差，避免整房同步呼吸
+    this.prevX = x;
+    this.moveVX = 0;       // 每幀實際水平位移（判斷移動中/方向）
+    this.airborne = false; // 空中（飛行系自動判別）
   }
 
   applyStun(frames) { this.stunFrames = Math.max(this.stunFrames, frames); }
@@ -62,6 +68,11 @@ export class BaseEnemy extends Entity {
 
   update(dt, player) {
     if (this.state === "DEAD" || !this.active) return;
+
+    this.animT += 0.06 * dt;
+    this.moveVX = this.x - this.prevX;
+    this.prevX = this.x;
+    this.airborne = this.y + this.h < FLOOR_Y - 6;
 
     // ── 中毒：每 60f 扣血（不打斷 AI）──
     if (this.poisonFrames > 0) {
@@ -123,13 +134,31 @@ export class BaseEnemy extends Entity {
     const dw = img.width * fit, dh = img.height * fit;
     ctx.save();
     if (opts.alpha !== undefined) ctx.globalAlpha = opts.alpha;
-    ctx.translate(this.x + this.w / 2, this.y + this.h);
+    // ── 程序式動畫：呼吸 / 移動彈跳+傾斜 / 飛行浮沉 / 攻擊蓄力 / 受傷抖動 ──
+    let sx = 1, sy = 1, oy = 0, rot = 0, ox = 0;
+    const moving = Math.abs(this.moveVX) > 0.3;
+    if (this.airborne) {
+      oy = Math.sin(this.animT * 2.2) * 3;                  // 拍翅浮沉
+      rot = Math.sin(this.animT * 2.2 + 1) * 0.06;
+    } else if (moving) {
+      oy = -Math.abs(Math.sin(this.animT * 1.8)) * 3;       // 走路彈跳
+      rot = (this.moveVX > 0 ? 1 : -1) * 0.05;              // 朝移動方向微傾
+    } else {
+      sy = 1 + Math.sin(this.animT) * 0.02;                 // 待機呼吸
+      sx = 1 - Math.sin(this.animT) * 0.012;
+    }
+    if (this.state === "ATTACK") { sy *= 0.93; sx *= 1.05; } // 攻擊蓄力壓扁
+    if (this.hurtFrames > 0) ox = (Math.random() - 0.5) * 3; // 受傷抖動
+
+    ctx.translate(this.x + this.w / 2 + ox, this.y + this.h + oy);
+    ctx.rotate(rot);                                         // 世界座標傾斜（翻面前）
     if (opts.rotate) {
       ctx.translate(0, -this.h / 2);
       ctx.rotate(opts.rotate);
       ctx.translate(0, this.h / 2);
     }
-    ctx.scale(opts.noFlip ? 1 : -(opts.facing ?? this.facing ?? 1), 1);
+    ctx.scale((opts.noFlip ? 1 : -(opts.facing ?? this.facing ?? 1)) * sx, sy);
+    this.lastSpriteKey = key; // Task 3 死亡溶解 ghost 用
     // 受傷白閃；平時留極淡 rim glow（亮彩背景下黑剪影本身可讀，
     // glow 只為腳部與前景黑地板交界處保留一點分離度）
     ctx.filter = this.hurtFrames > 0
