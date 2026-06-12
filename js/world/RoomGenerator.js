@@ -20,8 +20,10 @@ import { setupSecretRoom } from "../rooms/SecretRoom.js";
 import { setupDevilRoom } from "../rooms/DevilRoom.js";
 import { setupAngelRoom } from "../rooms/AngelRoom.js";
 import { setupChallengeRoom } from "../rooms/ChallengeRoom.js";
+import { Platform } from "./Platform.js";
 import {
   GRID_W, GRID_H, MIN_ROOMS, MAX_ROOMS, ROOM_TYPES,
+  CANVAS_W, PLATFORM_TIER1_Y, PLATFORM_TIER2_Y,
 } from "../core/Constants.js";
 
 const DIRS = [
@@ -134,6 +136,23 @@ export function generateFloor(floorNum, seed) {
       if (neighbor && neighbor.type !== ROOM_TYPES.SECRET) {
         room.addDoor(dd.dir);
       }
+    }
+  }
+
+  // ── Step 4b: 佈置跳台（M5.5）──────────────────────
+  // 有 N 門：保證階梯（TIER1 側邊 → TIER2 門下方）讓玩家跳得進北門；
+  // 無 N 門的戰鬥房（NORMAL/CHALLENGE/BOSS）：一座戰術平台（站高打空中怪）
+  for (const room of rooms) {
+    if (room.type === ROOM_TYPES.SECRET) continue;
+    if (room.doors.N) {
+      const side = rng.float() < 0.5 ? -1 : 1; // TIER1 隨機放左/右側
+      const t1x = side === -1 ? 170 : CANVAS_W - 170 - 180;
+      room.platforms.push(new Platform(t1x, PLATFORM_TIER1_Y, 180));
+      room.platforms.push(new Platform(CANVAS_W / 2 - 75, PLATFORM_TIER2_Y, 150)); // 北門正下方
+    } else if (room.type === ROOM_TYPES.NORMAL || room.type === ROOM_TYPES.CHALLENGE ||
+               room.type === ROOM_TYPES.BOSS) {
+      const slots = [150, CANVAS_W / 2 - 90, CANVAS_W - 150 - 180];
+      room.platforms.push(new Platform(rng.pick(slots), PLATFORM_TIER1_Y, 180));
     }
   }
 

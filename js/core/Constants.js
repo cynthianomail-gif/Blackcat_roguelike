@@ -44,6 +44,19 @@ export const BOBBING_FREQ = 0.15;          // 走路彈跳頻率（rad/frame）
 export const TILT_MAX = 5;                 // 走路最大傾斜角度（度）
 export const TILT_SPEED = 0.2;             // 傾斜 lerp 速度
 
+// ── 2.2b 平台 & 姿態（M5.5 新功能）──────────────────
+// 跳躍最大上升高度 = 13²/(2×0.6) ≈ 141px；玩家高 44px
+// 地板起跳腳底最高到 y≈259 → TIER1 必須 ≥ 260 才踩得到
+// TIER1 起跳腳底最高到 y≈139 → TIER2 必須 ≥ 140
+// TIER2 起跳頭頂可達天花板（y=60）→ 北門觸發區（y≤62）可進
+export const PLATFORM_H = 14;          // 平台厚度（px）
+export const PLATFORM_TIER1_Y = 280;   // 第一層平台頂面 Y
+export const PLATFORM_TIER2_Y = 170;   // 第二層平台頂面 Y（通北門）
+export const PLATFORM_DROP_FRAMES = 10;// 下穿平台的穿透幀數
+export const CROUCH_H = 26;            // 趴下碰撞箱高度（站立 44）
+export const CROUCH_SPEED_MULT = 0.45; // 趴下移速倍率
+export const RUN_FRAME_INTERVAL = 8;   // 跑步動畫換幀間隔（frames）
+
 // ── 2.3 地圖生成 ─────────────────────────────────────
 export const GRID_W = 9;           // 地圖格子寬度（格數）
 export const GRID_H = 7;           // 地圖格子高度（格數）

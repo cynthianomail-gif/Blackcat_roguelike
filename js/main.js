@@ -158,9 +158,9 @@ function update(dt) {
   }
 
   camera.update();
-  if (player.active) player.update(dt, input);
-
   const room = floor.currentRoom;
+  if (player.active) player.update(dt, input, room); // room: 單向跳台碰撞
+
   if (room) {
     room.update(dt, player, input);
     room.handleBulletCollisions(bulletPool.bullets);
@@ -171,8 +171,8 @@ function update(dt) {
       if (!nearInteractable) itemManager.useActive(room);
     }
 
-    // 門觸發 → 房間切換
-    const dir = room.checkDoorTransition(player);
+    // 門觸發 → 房間切換（input：S 門需按住下鍵）
+    const dir = room.checkDoorTransition(player, input);
     if (dir) {
       const next = floor.moveTo(dir, player);
       if (next) {

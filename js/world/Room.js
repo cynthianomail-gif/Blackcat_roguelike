@@ -21,6 +21,7 @@ export class Room {
     this.enemyBullets = []; // 敵人投射物（子彈/炸彈）；陣列引用不可換（Renderer 持有）
     this.items = [];    // 地上的道具
     this.objects = [];  // 環境物件（炸彈桶/商品等）
+    this.platforms = []; // 單向跳台（RoomGenerator 填入；有 N 門的房間保證可達）
     this.isRevealed = false;
     this.isVisited = false;
     this.gridPos = null; // RoomGenerator 填入 {x, y}
@@ -110,7 +111,9 @@ export class Room {
 
   // ── 玩家 vs 門（房間切換觸發）──────────────────────
   // 回傳觸發的方向，無則 null
-  checkDoorTransition(player) {
+  // S 門是地板開口：須按住 S/↓ 表達下樓意圖（否則經 N 門進房
+  // 會落在對面 S 門上立刻被彈回去；開局出生點也站在 S 門上）
+  checkDoorTransition(player, input = null) {
     if (!player.active) return null;
     for (const [dir, door] of Object.entries(this.doors)) {
       if (!door || !door.isOpen) continue;
@@ -119,12 +122,14 @@ export class Room {
         x: door.rect.x - 2, y: door.rect.y - 2,
         w: door.rect.w + 4, h: door.rect.h + 4,
       };
+      // N 門在天花板：觸發區向下延伸 12px（跳到頂點貼天花板即可進，不需逐px精準）
+      if (dir === "N") zone.h += 12;
       if (rectsOverlap(player.hitbox, zone)) {
         // 確認玩家正朝門的方向推進
         if (dir === "E" && player.x + player.w >= CANVAS_W - WALL_THICKNESS - 1) return dir;
         if (dir === "W" && player.x <= WALL_THICKNESS + 1) return dir;
-        if (dir === "N" && player.y <= CEILING_Y + 1) return dir;
-        if (dir === "S" && player.y + player.h >= FLOOR_Y - 1) return dir;
+        if (dir === "N" && player.y <= CEILING_Y + 12 && player.vy <= 0) return dir;
+        if (dir === "S" && player.y + player.h >= FLOOR_Y - 1 && input?.downHeld) return dir;
       }
     }
     return null;
@@ -140,6 +145,8 @@ export class Room {
     for (let x = 0; x < CANVAS_W; x += TILE_SIZE) {
       ctx.strokeRect(x, FLOOR_Y, TILE_SIZE, CANVAS_H - FLOOR_Y);
     }
+    // 單向跳台（前景平面，與地板同層繪製）
+    this.platforms.forEach(p => p.draw(ctx));
   }
 
   drawObjects(ctx) {

@@ -11,6 +11,7 @@ import {
   PLAYER_W, PLAYER_H, PLAYER_BASE_HP, PLAYER_BASE_DAMAGE,
   PLAYER_FIRE_RATE, PLAYER_BULLET_SPEED, PLAYER_BULLET_RANGE,
   PLAYER_BULLET_W, PLAYER_BULLET_H,
+  CROUCH_H, CROUCH_SPEED_MULT, PLATFORM_DROP_FRAMES, RUN_FRAME_INTERVAL,
   EX_ENERGY_MAX, EX_BULLET_DAMAGE_MULT, EX_BULLET_SPEED, EX_BULLET_W, EX_BULLET_H,
   DASH_SPEED, DASH_DURATION, DASH_COOLDOWN,
   INVINCIBILITY_FRAMES, BLINK_INTERVAL,
@@ -87,6 +88,13 @@ export class Player extends Entity {
     // ── 移動/物理狀態 ──
     this.isGrounded = false;
     this.facing = 1; // 1=右, -1=左
+    this.isCrouching = false;       // 趴下（S/↓，碰撞箱變矮）
+    this.standingPlatform = null;   // 目前踩著的單向跳台
+    this.dropFrames = 0;            // 下穿平台的穿透剩餘幀
+    this.atWall = 0;                // 空中貼牆：-1 左牆 / 0 / 1 右牆（爬牆貼圖用）
+    this.isMoving = false;          // 地面移動中（跑步動畫用）
+    this.runFrame = 0;              // 跑步動畫幀（0/1 交替）
+    this.runTimer = 0;
 
     // ── 計時器 ──
     this.fireTimer = 0;
@@ -113,8 +121,9 @@ export class Player extends Entity {
     return this.tempDamageMultFrames > 0 ? base * 2 : base; // 屠殺魔法書 ×2
   }
 
-  update(dt, input) {
+  update(dt, input, room = null) {
     if (!input) return;
+    const wasGrounded = this.isGrounded;
 
     // ── Dash ──
     if (this.dashCooldown > 0) this.dashCooldown -= dt;
@@ -137,9 +146,18 @@ export class Player extends Entity {
       }
     }
 
+    // ── 趴下（地面按住 S/↓；碰撞箱變矮、移速降）──
+    const wantCrouch = input.downHeld && this.isGrounded && this.dashFrames <= 0;
+    if (wantCrouch !== this.isCrouching) {
+      if (wantCrouch) { this.y += PLAYER_H - CROUCH_H; this.h = CROUCH_H; }
+      else            { this.y -= PLAYER_H - CROUCH_H; this.h = PLAYER_H; }
+      this.isCrouching = wantCrouch;
+    }
+
     // ── 水平移動 ──
     const ax = input.axisX;
-    const effSpeed = this.slowFrames > 0 ? this.speed * 0.55 : this.speed;
+    let effSpeed = this.slowFrames > 0 ? this.speed * 0.55 : this.speed;
+    if (this.isCrouching) effSpeed *= CROUCH_SPEED_MULT;
     if (this.dashFrames > 0) {
       this.dashFrames -= dt;
       this.x += this.facing * DASH_SPEED * dt;
@@ -148,27 +166,58 @@ export class Player extends Entity {
       if (ax !== 0) this.facing = ax > 0 ? 1 : -1;
     }
 
-    // ── 跳躍 / 重力 ──
+    // ── 跳躍 / 平台下穿 / 重力 ──
     if (input.jumpPressed && this.isGrounded) {
-      this.vy = PLAYER_JUMP_FORCE;
-      this.isGrounded = false;
-      EventBus.emit("playerJump", this);
+      if (this.standingPlatform && input.downHeld) {
+        // 趴著按跳 = 下穿單向跳台
+        this.dropFrames = PLATFORM_DROP_FRAMES;
+        this.isGrounded = false;
+        this.standingPlatform = null;
+      } else if (!this.isCrouching) {
+        this.vy = PLAYER_JUMP_FORCE;
+        this.isGrounded = false;
+        this.standingPlatform = null;
+        EventBus.emit("playerJump", this);
+      }
     }
+    if (this.dropFrames > 0) this.dropFrames -= dt;
+    const prevBottom = this.y + this.h;
     this.vy = Math.min(this.vy + PLAYER_GRAVITY * dt, PLAYER_MAX_FALL);
     this.y += this.vy * dt;
 
-    // ── 地板 / 天花板 / 牆壁碰撞 ──
+    // ── 地板 / 跳台 / 天花板 / 牆壁碰撞 ──
     if (this.y + this.h >= FLOOR_Y) {
-      const wasAirborne = !this.isGrounded;
       this.y = FLOOR_Y - this.h;
       this.vy = 0;
       this.isGrounded = true;
-      if (wasAirborne) EventBus.emit("playerLand", this);
+      this.standingPlatform = null;
+      if (!wasGrounded) EventBus.emit("playerLand", this);
     } else {
       this.isGrounded = false;
+      this.standingPlatform = null;
+    }
+    // 單向跳台：僅下落中、且非下穿狀態，從上方越過頂面時站上
+    if (!this.isGrounded && this.vy >= 0 && this.dropFrames <= 0 && room?.platforms) {
+      for (const p of room.platforms) {
+        if (this.x + this.w <= p.x || this.x >= p.x + p.w) continue;
+        if (prevBottom <= p.y + 1 && this.y + this.h >= p.y) {
+          this.y = p.y - this.h;
+          this.vy = 0;
+          this.isGrounded = true;
+          this.standingPlatform = p;
+          if (!wasGrounded) EventBus.emit("playerLand", this);
+          break;
+        }
+      }
     }
     if (this.y < CEILING_Y) { this.y = CEILING_Y; this.vy = Math.max(this.vy, 0); }
     this.x = Math.max(WALL_THICKNESS, Math.min(CANVAS_W - WALL_THICKNESS - this.w, this.x));
+    // 空中貼牆偵測（爬牆貼圖：持續往牆方向推才算抓牆）
+    this.atWall = 0;
+    if (!this.isGrounded) {
+      if (ax < 0 && this.x <= WALL_THICKNESS + 0.5) this.atWall = -1;
+      else if (ax > 0 && this.x + this.w >= CANVAS_W - WALL_THICKNESS - 0.5) this.atWall = 1;
+    }
 
     // ── 射擊（三種模式：雷射 / 蓄力 / 連發）──
     if (this.fireTimer > 0) this.fireTimer -= dt;
@@ -210,13 +259,20 @@ export class Player extends Entity {
     // ── 受傷無敵幀 ──
     if (this.invincibleFrames > 0) this.invincibleFrames -= dt;
 
-    // ── 走路動畫：彈跳 + 傾斜 ──
+    // ── 走路動畫：彈跳 + 傾斜 + 跑步換幀 ──
     const moving = ax !== 0 && this.isGrounded && this.dashFrames <= 0;
+    this.isMoving = moving;
     if (moving) {
       this.bobbingTimer += BOBBING_FREQ * dt;
       this.spriteOffsetY = Math.sin(this.bobbingTimer) * BOBBING_AMPLITUDE;
+      this.runTimer += dt;
+      if (this.runTimer >= RUN_FRAME_INTERVAL) {
+        this.runTimer = 0;
+        this.runFrame = this.runFrame ? 0 : 1;
+      }
     } else {
       this.spriteOffsetY *= 0.8;
+      this.runTimer = 0;
     }
     const targetTilt = -ax * TILT_MAX;
     this.tiltAngle += (targetTilt - this.tiltAngle) * TILT_SPEED * dt;
@@ -416,7 +472,13 @@ export class Player extends Entity {
     const w = this.w, h = this.h;
 
     // ── Higgsfield 貓咪剪影素材（有圖用圖；無圖幾何 fallback）──
-    const img = getAsset(this.isGrounded ? "player_idle" : "player_jump");
+    // 姿態優先序：空中（貼牆=爬牆圖）> 趴下 > 跑步兩幀交替 > 待機
+    let poseKey;
+    if (!this.isGrounded)      poseKey = this.atWall !== 0 ? "player_climb" : "player_jump";
+    else if (this.isCrouching) poseKey = "player_crouch";
+    else if (this.isMoving)    poseKey = this.runFrame ? "player_run2" : "player_run1";
+    else                       poseKey = "player_idle";
+    const img = getAsset(poseKey) || getAsset(this.isGrounded ? "player_idle" : "player_jump");
     if (img) {
       const dh = h * 1.3; // 素材比碰撞箱稍大，視覺飽滿
       const dw = dh * (img.width / img.height);

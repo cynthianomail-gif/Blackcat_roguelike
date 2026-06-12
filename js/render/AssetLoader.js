@@ -8,6 +8,11 @@ export const ASSETS = {
   // Higgsfield P1 素材（M3 里程碑）
   player_idle:      "assets/images/sprites/cat_idle.png",
   player_jump:      "assets/images/sprites/cat_jump.png",
+  // M5.5 姿態擴充：跑步兩幀 / 趴下 / 爬牆（空中貼牆）
+  player_run1:      "assets/images/sprites/cat_run1.png",
+  player_run2:      "assets/images/sprites/cat_run2.png",
+  player_crouch:    "assets/images/sprites/cat_crouch.png",
+  player_climb:     "assets/images/sprites/cat_climb.png",
   boss_feathertop:  "assets/images/sprites/boss_feathertop.png",
   boss_roachmaster: "assets/images/sprites/boss_roachmaster.png",
   boss_ratking:     "assets/images/sprites/boss_ratking.png",
