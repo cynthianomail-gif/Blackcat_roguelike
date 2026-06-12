@@ -8,6 +8,10 @@
 LIMBO/BADLAND 風格 2D Roguelike，純前端（Canvas + ES Module，無建置工具）。
 入口 `index.html`，本地開 server 即可跑（任何 static server，preview 設定在 `.claude/launch.json`，port 8765）。
 
+**線上版（GitHub Pages）**：<https://cynthianomail-gif.github.io/Blackcat_roguelike/>
+remote `origin` = `https://github.com/cynthianomail-gif/Blackcat_roguelike.git`；本地分支 `master` 推 `main`（程式碼）＋ `gh-pages`（Pages 來源）。
+**部署＝兩個分支都推**：`git push origin master:main master:gh-pages`（程式全相對路徑，子路徑下可直跑）。
+
 規格驅動開發，三份文件在 repo 根目錄：
 - `黑貓流浪記_企畫書_v2.0_Roguelike.docx`（**內容已更新至 v2.1**：美術方向改版＋里程碑進度標記）
 - `黑貓流浪記_技術規格書_v1.0.docx`（Section 8 列 Task 1-13，各有驗收清單與指定 commit 訊息）
