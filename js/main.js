@@ -33,7 +33,7 @@ import {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const renderer = new Renderer(ctx, canvas.width, canvas.height);
+const renderer = new Renderer(ctx);
 
 // ── 滿版：等比縮放鋪滿視窗（邏輯解析度 900×506 不變）──
 // 實際像素 = 邏輯尺寸 × scale × devicePixelRatio，由 Renderer 的

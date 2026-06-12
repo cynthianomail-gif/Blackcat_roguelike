@@ -6,10 +6,8 @@
 import { CANVAS_W, CANVAS_H, FLOOR_Y, WALL_THICKNESS, TILE_SIZE } from "../core/Constants.js";
 
 export class Renderer {
-  constructor(ctx, width, height) {
+  constructor(ctx) {
     this.ctx = ctx;
-    this.width = width;
-    this.height = height;
     this.pixelRatio = 1;
     // scene 物件由 main.js 組裝，各欄位可為 null（漸進式接線）
     this.scene = {
