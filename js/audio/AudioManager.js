@@ -16,6 +16,7 @@ export class AudioManager {
     this.sfxVolume = 0.70;    // SFX 預設音量
     this.muted     = false;
     this._initialized = false;
+    this._sfxLast  = {};      // SFX 名稱 → 上次播放時間（密集重複合併）
   }
 
   // ── 初始化（必須在使用者互動後呼叫）────────────────────────
@@ -67,6 +68,11 @@ export class AudioManager {
   // ── SFX 播放（Web Audio API 合成）────────────────────────
   playSFX(name) {
     if (!this._initialized || this.muted) return;
+    // Audio-4：同名 SFX 35ms 內只播一次——多發子彈同幀命中（四爪/十字
+    // 貓掌）或低幀率補幀時，避免同一合成音疊加爆音
+    const now = performance.now();
+    if (now - (this._sfxLast[name] || 0) < 35) return;
+    this._sfxLast[name] = now;
     const preset = SFX_PRESETS[name];
     if (preset) preset(this.ctx, this.sfxGain);
     else console.warn(`[Audio] SFX "${name}" not found`);

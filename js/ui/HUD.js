@@ -82,19 +82,25 @@ export class HUD {
   }
 
   // ── 血量：愛心 × maxHP；紅=有血（支援半顆）、灰=空 ──
+  // 每排 12 顆換行（血上限道具疊多時不撞 Boss 血條/主動道具欄）
   drawHearts(ctx) {
     const p = this.player;
+    const PER_ROW = 12, ROW_H = HEART_SIZE + 6;
+    const slot = (i) => ({
+      x: 10 + (i % PER_ROW) * (HEART_SIZE + HEART_GAP),
+      y: 10 + Math.floor(i / PER_ROW) * ROW_H,
+    });
     for (let i = 0; i < p.maxHP; i++) {
-      const x = 10 + i * (HEART_SIZE + HEART_GAP);
+      const { x, y } = slot(i);
       const filled = Math.max(0, Math.min(1, p.hp - i)); // 0 | 0.5 | 1
-      this.drawHeart(ctx, x, 10, "#4a4a4a");            // 底：灰色空心
-      if (filled > 0) this.drawHeart(ctx, x, 10, "#c8102e", filled);
+      this.drawHeart(ctx, x, y, "#4a4a4a");              // 底：灰色空心
+      if (filled > 0) this.drawHeart(ctx, x, y, "#c8102e", filled);
     }
     // 魂心（藍色）接在紅心後面
     for (let i = 0; i < Math.ceil(p.soulHearts); i++) {
-      const x = 10 + (p.maxHP + i) * (HEART_SIZE + HEART_GAP);
+      const { x, y } = slot(p.maxHP + i);
       const filled = Math.max(0, Math.min(1, p.soulHearts - i));
-      this.drawHeart(ctx, x, 10, "#5a8fd1", filled);
+      this.drawHeart(ctx, x, y, "#5a8fd1", filled);
     }
   }
 

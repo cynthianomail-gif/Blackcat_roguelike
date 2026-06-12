@@ -142,14 +142,14 @@ export class ShopItem extends Entity {
     if (this.deniedTimer > 0) {
       ctx.fillStyle = "#c8102e";
       ctx.font = "bold 13px sans-serif";
-      ctx.fillText("小魚乾不足", cx, this.y - 28);
+      ctx.fillText("小魚乾不足", cx, this.y - 44);
     } else if (this.playerNear) {
       ctx.fillStyle = "#fff";
       ctx.font = "bold 13px sans-serif";
       ctx.strokeStyle = "rgba(0,0,0,0.7)";
       ctx.lineWidth = 3;
-      ctx.strokeText("E 購買", cx, this.y - 28);
-      ctx.fillText("E 購買", cx, this.y - 28);
+      ctx.strokeText("E 購買", cx, this.y - 44);
+      ctx.fillText("E 購買", cx, this.y - 44);
     }
     ctx.restore();
   }
