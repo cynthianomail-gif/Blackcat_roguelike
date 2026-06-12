@@ -93,6 +93,55 @@ function bakeFloor(room, rnd) {
   c.lineTo(CANVAS_W - WALL_THICKNESS, FLOOR_Y + 0.75);
   c.stroke();
 
+  // ── M9 土層斷面質感（全烘焙，零每幀成本）────────────
+  // 地層橫線 1~2 條（極淡、帶微起伏）
+  const strataN = 1 + Math.floor(rnd() * 2);
+  for (let i = 0; i < strataN; i++) {
+    const ly = FLOOR_Y + 18 + rnd() * (CANVAS_H - FLOOR_Y - 30);
+    c.strokeStyle = `rgba(255,232,170,${(0.05 + rnd() * 0.02).toFixed(3)})`;
+    c.lineWidth = 1;
+    c.beginPath();
+    c.moveTo(0, ly);
+    let sx2 = 0;
+    while (sx2 < CANVAS_W) {
+      sx2 += 90 + rnd() * 60;
+      c.lineTo(Math.min(sx2, CANVAS_W), ly + rnd() * 4 - 2);
+    }
+    c.stroke();
+  }
+  // 埋藏石塊 2~4 顆（#1b1b22，比底色 #101014 微亮一階）
+  const rocks = 2 + Math.floor(rnd() * 3);
+  c.fillStyle = "#1b1b22";
+  for (let i = 0; i < rocks; i++) {
+    const rx2 = 40 + rnd() * (CANVAS_W - 80);
+    const ry2 = FLOOR_Y + 22 + rnd() * (CANVAS_H - FLOOR_Y - 40);
+    c.beginPath();
+    c.ellipse(rx2, ry2, 8 + rnd() * 14, 5 + rnd() * 8, rnd() * Math.PI, 0, Math.PI * 2);
+    c.fill();
+  }
+  // 根鬚 1~2 根（從地表往下、漸隱的微光線）
+  const roots = 1 + Math.floor(rnd() * 2);
+  for (let i = 0; i < roots; i++) {
+    const x2 = WALL_THICKNESS + 40 + rnd() * (CANVAS_W - 2 * WALL_THICKNESS - 80);
+    const len = 18 + rnd() * 22;
+    const g = c.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + len);
+    g.addColorStop(0, "rgba(255,232,170,0.10)");
+    g.addColorStop(1, "rgba(255,232,170,0)");
+    c.strokeStyle = g;
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.moveTo(x2, FLOOR_Y + 2);
+    c.quadraticCurveTo(x2 + rnd() * 10 - 5, FLOOR_Y + len * 0.6, x2 + rnd() * 14 - 7, FLOOR_Y + len);
+    c.stroke();
+  }
+  // 底緣 1px 紫微光
+  c.strokeStyle = "rgba(120,80,200,0.35)";
+  c.lineWidth = 1;
+  c.beginPath();
+  c.moveTo(0, CANVAS_H - 0.5);
+  c.lineTo(CANVAS_W, CANVAS_H - 0.5);
+  c.stroke();
+
   if (room.doors.S) punch(c, "S", room.doors.S.rect);
   return cv;
 }
