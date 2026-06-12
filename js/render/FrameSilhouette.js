@@ -29,6 +29,8 @@ export function mulberry32(seed) {
 
 // 取得房間的烘焙層；門簽名變了（炸彈開門）自動重烘
 export function frameLayersFor(room) {
+  // 注意：門洞不分開/關一律挖穿（開關是 Door.draw 的執行期視覺，
+  // 鎖門時由 Door.draw 畫荊棘/暗洞填補）；簽名只追蹤門的存在。
   const sig = ["N", "S", "E", "W"].filter(d => room.doors[d]).join("");
   if (room._frameSig === sig && room._frameLayers) return room._frameLayers;
   const seed = (room.floorNum || 1) * 1000 +
@@ -74,8 +76,8 @@ function bakeFloor(room, rnd) {
   while (x < CANVAS_W - WALL_THICKNESS - 30) {
     const inSZone = sZone && x > sZone.a && x < sZone.b;
     const nearSideDoor = x < WALL_THICKNESS + 80 || x > CANVAS_W - WALL_THICKNESS - 80;
+    const kind = rnd(); // 不論是否落在 S 門區都消耗 RNG，保持序列與門無關
     if (!inSZone) {
-      const kind = rnd();
       if (kind < 0.45 || (nearSideDoor && kind >= 0.75)) drawTuft(c, x, FLOOR_Y, rnd);
       else if (kind < 0.75) drawPebble(c, x, FLOOR_Y, rnd);
       else drawMound(c, x, FLOOR_Y, rnd);
@@ -120,7 +122,7 @@ function drawPebble(c, x, gy, rnd) {
 
 function drawMound(c, x, gy, rnd) {
   c.fillStyle = INK;
-  const w = 26 + rnd() * 30, h = 5 + rnd() * 5; // 高度 ≤10px
+  const w = 26 + rnd() * 30, h = 5 + rnd() * 5; // 控制點偏移；貝茲頂點≈h，視覺峰值 ≤10px
   c.beginPath();
   c.moveTo(x - w / 2, gy + 1);
   c.quadraticCurveTo(x, gy - h * 2, x + w / 2, gy + 1);
