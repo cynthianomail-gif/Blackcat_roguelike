@@ -28,7 +28,7 @@ import { Audio } from "./audio/AudioManager.js";
 import { wireAudioEvents } from "./audio/AudioEvents.js";
 import { generateFloor } from "./world/RoomGenerator.js";
 import {
-  CANVAS_W, CANVAS_H, FLOOR_Y, PLAYER_H,
+  CANVAS_W, CANVAS_H, FLOOR_Y, PLAYER_H, FINAL_FLOOR,
   COIN_DROP_CHANCE, HEART_DROP_CHANCE, BOMB_DROP_CHANCE, KEY_DROP_CHANCE,
 } from "./core/Constants.js";
 
@@ -163,7 +163,7 @@ function update(dt) {
   if (state.is(STATES.MAIN_MENU)) {
     if (input.confirmPressed) {
       state.change(STATES.EXPLORING);
-      EventBus.emit("floorChanged", gm.floor); // 開局播放 F1 BGM
+      EventBus.emit("floorChanged", gm.floor); // 開局視為進入 F1（BGM/轉場字卡/粒子重置）
     }
     input.endFrame();
     return;
@@ -318,7 +318,6 @@ EventBus.on("requestTeleport", ({ x, y }) => {
 });
 
 // 下一層：F1-F6 → F7（最終 Boss 層）→ 通關 RUN_CLEAR
-const FINAL_FLOOR = 7;
 function goToNextFloor() {
   const next = floor.floorNum + 1;
   if (next > FINAL_FLOOR) {

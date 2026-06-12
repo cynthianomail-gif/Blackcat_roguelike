@@ -17,7 +17,7 @@ export class TransitionFX {
 
   onFloorChanged(num) {
     this.fade = 1;
-    this.cardText = `F${num}・${FLOOR_NAMES[num] || ""}`;
+    this.cardText = FLOOR_NAMES[num] ? `F${num}・${FLOOR_NAMES[num]}` : `F${num}`;
     this.cardT = CARD_IN + CARD_HOLD + CARD_OUT;
   }
 
@@ -39,6 +39,7 @@ export class TransitionFX {
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, a));
       ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic"; // 不依賴全域預設，防外部污染
       ctx.fillStyle = "rgba(8,8,12,0.6)";
       ctx.beginPath();
       ctx.roundRect(CANVAS_W / 2 - 150, 120, 300, 64, 10);
