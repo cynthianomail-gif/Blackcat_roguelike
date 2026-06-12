@@ -38,6 +38,8 @@ export class BaseEnemy extends Entity {
     this.prevX = x;
     this.moveVX = 0;       // 每幀實際水平位移（判斷移動中/方向）
     this.airborne = false; // 空中（飛行系自動判別）
+    this.atkSquashT = 0;   // 進入 ATTACK 的蓄力壓扁剩餘幀
+    this._lastState = "IDLE";
   }
 
   applyStun(frames) { this.stunFrames = Math.max(this.stunFrames, frames); }
@@ -102,6 +104,11 @@ export class BaseEnemy extends Entity {
       this.behave(effDt, player); // 子類各自的 AI
     }
 
+    // 攻擊蓄力壓扁：只在「進入」ATTACK 的瞬間觸發 18 幀（常駐 ATTACK 的怪不會永久壓扁）
+    if (this.state === "ATTACK" && this._lastState !== "ATTACK") this.atkSquashT = 18;
+    if (this.atkSquashT > 0) this.atkSquashT -= dt;
+    this._lastState = this.state;
+
     this.clampToRoom();
 
     // 接觸傷害（玩家無敵幀由 Player.takeDamage 內部處理）
@@ -136,7 +143,7 @@ export class BaseEnemy extends Entity {
     if (opts.alpha !== undefined) ctx.globalAlpha = opts.alpha;
     // ── 程序式動畫：呼吸 / 移動彈跳+傾斜 / 飛行浮沉 / 攻擊蓄力 / 受傷抖動 ──
     let sx = 1, sy = 1, oy = 0, rot = 0, ox = 0;
-    const moving = Math.abs(this.moveVX) > 0.3;
+    const moving = this.state !== "HURT" && Math.abs(this.moveVX) > 0.3;
     if (this.airborne) {
       oy = Math.sin(this.animT * 2.2) * 3;                  // 拍翅浮沉
       rot = Math.sin(this.animT * 2.2 + 1) * 0.06;
@@ -147,7 +154,7 @@ export class BaseEnemy extends Entity {
       sy = 1 + Math.sin(this.animT) * 0.02;                 // 待機呼吸
       sx = 1 - Math.sin(this.animT) * 0.012;
     }
-    if (this.state === "ATTACK") { sy *= 0.93; sx *= 1.05; } // 攻擊蓄力壓扁
+    if (this.atkSquashT > 0) { sy *= 0.93; sx *= 1.05; }      // 攻擊蓄力壓扁
     if (this.hurtFrames > 0) ox = (Math.random() - 0.5) * 3; // 受傷抖動
 
     ctx.translate(this.x + this.w / 2 + ox, this.y + this.h + oy);
