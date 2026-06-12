@@ -354,15 +354,17 @@ window.game.step = (n = 1) => {
 };
 
 async function boot() {
-  // ── M7 UI 字型（jf open 粉圓）：失敗不可擋遊戲，退回 sans-serif ──
-  try {
-    const font = new FontFace("openhuninn", "url(assets/fonts/jf-openhuninn.ttf)");
-    await font.load();
-    document.fonts.add(font);
-  } catch (err) {
-    console.warn("字型載入失敗，退回 sans-serif", err);
-  }
-  await loadAllAssets();
+  // ── M7 UI 字型（jf open 粉圓）：與圖片資產併行載入；失敗不可擋遊戲，退回 sans-serif ──
+  const fontReady = (async () => {
+    try {
+      const font = new FontFace("openhuninn", "url(assets/fonts/jf-openhuninn.ttf)");
+      await font.load();
+      document.fonts.add(font);
+    } catch (err) {
+      console.warn("字型載入失敗，退回 sans-serif", err);
+    }
+  })();
+  await Promise.all([fontReady, loadAllAssets()]);
   state.change(STATES.MAIN_MENU);
   requestAnimationFrame(gameLoop);
 }
