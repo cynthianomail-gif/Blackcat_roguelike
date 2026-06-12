@@ -15,7 +15,7 @@ export class Renderer {
       familiars: [], enemies: [], boss: null,
       bullets: [], enemyBullets: [], bossBullets: [],
       hud: null, mapDisplay: null, itemDisplay: null, synergyAlert: null,
-      background: null, screens: null,
+      background: null, screens: null, particles: null,
     };
   }
 
@@ -55,6 +55,9 @@ export class Renderer {
       (s.bullets || []).forEach(b => b.active && b.draw(ctx));
       (s.enemyBullets || []).forEach(b => b.active && b.draw(ctx));
       (s.bossBullets || []).forEach(b => b.active && b.draw(ctx));
+
+      // 9.5 粒子層（死亡溶解 ghost + 碎片）
+      s.particles?.draw?.(ctx);
 
       // 10. 玩家最後畫（永遠在最前面）
       s.player?.draw?.(ctx);

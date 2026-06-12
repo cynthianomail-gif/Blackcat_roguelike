@@ -4,6 +4,7 @@
 import { Renderer } from "./render/Renderer.js";
 import { Camera } from "./render/Camera.js";
 import { ParallaxBackground } from "./render/Background.js";
+import { Particles } from "./render/Particles.js";
 import { loadAllAssets } from "./render/AssetLoader.js";
 import { GameManager } from "./core/GameManager.js";
 import { StateManager, STATES } from "./core/StateManager.js";
@@ -110,6 +111,7 @@ renderer.scene.hud = hud;
 renderer.scene.mapDisplay = mapDisplay;
 renderer.scene.itemDisplay = itemDisplay;
 renderer.scene.screens = screens;
+renderer.scene.particles = Particles;
 mapDisplay.floor = floor;
 
 function syncSceneToRoom() {
@@ -214,6 +216,7 @@ function update(dt) {
   itemManager.update(dt, input, floor.currentRoom); // 每幀道具邏輯
   synergyAlert.update(dt);
   hud.update(dt);
+  Particles.update(dt);
   itemDisplay.update(dt);
 
   if (floorTransitionTimer >= 0) {
@@ -245,6 +248,33 @@ EventBus.on("enemyDied", (e) => {
   else if (roll < COIN_DROP_CHANCE + HEART_DROP_CHANCE + BOMB_DROP_CHANCE + luckBonus) make = () => new BombDrop(x, y);
   else if (roll < COIN_DROP_CHANCE + HEART_DROP_CHANCE + BOMB_DROP_CHANCE + KEY_DROP_CHANCE + luckBonus) make = () => new KeyDrop(x, y);
   if (make) for (let i = 0; i < mult; i++) room.items.push(make());
+});
+
+// ── M7 粒子特效（純視覺）──
+EventBus.on("enemyDied", (e) => {
+  if (!e?.w) return;
+  Particles.ghost(e);
+  const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+  Particles.burst({ x: cx, y: cy, count: 10, color: "#16161c", speed: 4 });
+  Particles.burst({ x: cx, y: cy, count: 4, color: "#ffe9a0", speed: 2.5, size: 2 });
+});
+EventBus.on("enemyHurt", ({ enemy }) => {
+  if (!enemy?.w) return;
+  Particles.burst({ x: enemy.x + enemy.w / 2, y: enemy.y + enemy.h / 2,
+                    count: 3, color: "#ffffff", speed: 2.5, size: 2, grav: 0.05, life: 14 });
+});
+EventBus.on("playerLand", (p) => Particles.burst({
+  x: p.x + p.w / 2, y: p.y + p.h, count: 6, color: "#3a3a42",
+  speed: 1.6, grav: -0.01, life: 18, size: 2.5, spread: Math.PI * 0.9, baseAngle: -Math.PI / 2,
+}));
+EventBus.on("playerDash", (p) => Particles.burst({
+  x: p.x + p.w / 2, y: p.y + p.h, count: 5, color: "#3a3a42",
+  speed: 1.2, grav: -0.01, life: 14, size: 2, spread: Math.PI * 0.7, baseAngle: -Math.PI / 2,
+}));
+EventBus.on("coinPickup", () => {
+  const p = gm.player; if (!p) return;
+  Particles.burst({ x: p.x + p.w / 2, y: p.y + p.h / 2, count: 6,
+                    color: "#ffd75e", speed: 2.2, grav: 0.08, life: 20, size: 2.5 });
 });
 
 // 炸彈爆炸 → 畫面震動
