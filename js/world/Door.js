@@ -108,19 +108,20 @@ export class Door {
   _drawMotes(ctx, now) {
     const r = this.rect;
     const t = now * 0.001;
-    let bx, by; // 光塵基準點（洞口靠遊戲區側）
+    let bx, by, span = 64; // span＝光塵上飄距離（抵達時 alpha 歸零）
     switch (this.dir) {
       case "W": bx = WALL_THICKNESS + 14; by = FLOOR_Y - 8; break;
       case "E": bx = CANVAS_W - WALL_THICKNESS - 14; by = FLOOR_Y - 8; break;
-      case "N": bx = r.x + r.w / 2; by = r.y + r.h + 40; break;
+      // N 門：洞口下方淨空僅 ~40px（天花板 y=60 會蓋掉更高處）→ 縮短上飄距離
+      case "N": bx = r.x + r.w / 2; by = r.y + r.h + 56; span = 48; break;
       default:  bx = r.x + r.w / 2; by = r.y - 4; break; // S
     }
     ctx.fillStyle = "rgba(255,240,190,1)";
     for (let i = 0; i < 4; i++) {
-      const rise = (t * 14 + i * 23) % 64;
+      const rise = (t * 14 + i * 23) % span;
       const x = bx + Math.sin(t * 0.8 + i * 2.4) * (8 + i * 5);
       const y = by - rise;
-      ctx.globalAlpha = 0.7 * (1 - rise / 64);
+      ctx.globalAlpha = 0.7 * (1 - rise / span);
       ctx.beginPath();
       ctx.arc(x, y, 1.6, 0, Math.PI * 2);
       ctx.fill();
