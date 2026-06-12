@@ -6,10 +6,8 @@
 // ── 2.1 畫面 & 房間 ──────────────────────────────────
 export const CANVAS_W = 900;        // 畫布寬度（px）
 export const CANVAS_H = 506;        // 畫布高度（px）
-export const ROOM_W = 780;          // 房間可用寬度（不含牆壁）
-export const ROOM_H = 400;          // 房間可用高度（不含地板/天花板）
 export const WALL_THICKNESS = 60;   // 牆壁厚度（px）
-export const FLOOR_Y = 400;         // 地板 Y 座標（距頂）
+export const FLOOR_Y = 426;         // 地板 Y 座標（M9：400→426，底帶 106→80px）
 export const DOOR_W = 60;           // 門寬度（px）
 export const DOOR_H = 80;           // 門高度（px）
 export const TILE_SIZE = 40;        // 地板磚塊大小（px）
@@ -47,14 +45,14 @@ export const BOBBING_FREQ = 0.15;          // 走路彈跳頻率（rad/frame）
 export const TILT_MAX = 5;                 // 走路最大傾斜角度（度）
 export const TILT_SPEED = 0.2;             // 傾斜 lerp 速度
 
-// ── 2.2b 平台 & 姿態（M5.5 新功能）──────────────────
+// ── 2.2b 平台 & 姿態（M5.5 新功能；M9 隨 FLOOR_Y 整體 +26 平移）──
 // 跳躍最大上升高度 = 13²/(2×0.6) ≈ 141px；玩家高 44px
-// 地板起跳腳底最高到 y≈259 → TIER1 必須 ≥ 260 才踩得到
-// TIER1 起跳腳底最高到 y≈139 → TIER2 必須 ≥ 140
-// TIER2 起跳頭頂可達天花板（y=60）→ 北門觸發區（y≤62）可進
+// 地板（426）起跳腳底最高到 y≈285 → TIER1 必須 ≥ 286 才踩得到
+// TIER1（306）起跳腳底最高到 y≈165 → TIER2 必須 ≥ 166
+// TIER2（196）起跳頭頂可達天花板（y=60）→ 北門觸發區（y≤62）可進
 export const PLATFORM_H = 14;          // 平台厚度（px）
-export const PLATFORM_TIER1_Y = 280;   // 第一層平台頂面 Y
-export const PLATFORM_TIER2_Y = 170;   // 第二層平台頂面 Y（通北門）
+export const PLATFORM_TIER1_Y = 306;   // 第一層平台頂面 Y
+export const PLATFORM_TIER2_Y = 196;   // 第二層平台頂面 Y（通北門）
 export const PLATFORM_DROP_FRAMES = 10;// 下穿平台的穿透幀數
 export const CROUCH_H = 26;            // 趴下碰撞箱高度（站立 44）
 export const CROUCH_SPEED_MULT = 0.45; // 趴下移速倍率
