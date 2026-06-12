@@ -15,6 +15,7 @@ import { ItemManager } from "./items/ItemManager.js";
 import { FamiliarManager } from "./items/Familiar.js";
 import { Coin } from "./items/Coin.js";
 import { HeartDrop, BombDrop, KeyDrop } from "./items/Drops.js";
+import { PlacedBomb } from "./items/PlacedBomb.js";
 import { SynergyAlert } from "./ui/SynergyAlert.js";
 import { HUD } from "./ui/HUD.js";
 import { MapDisplay } from "./ui/MapDisplay.js";
@@ -171,6 +172,13 @@ function update(dt) {
       if (!nearInteractable) itemManager.useActive(room);
     }
 
+    // B 鍵：放置炸彈（範圍傷害 + 炸開隱藏房）
+    if (input.bombPressed && player.active && gm.bombs > 0) {
+      gm.bombs--;
+      room.items.push(new PlacedBomb(player.x + player.w / 2, player.y + player.h));
+      EventBus.emit("bombPlaced", { total: gm.bombs });
+    }
+
     // 門觸發 → 房間切換（input：S 門需按住下鍵）
     const dir = room.checkDoorTransition(player, input);
     if (dir) {
@@ -222,6 +230,9 @@ EventBus.on("enemyDied", (e) => {
   else if (roll < COIN_DROP_CHANCE + HEART_DROP_CHANCE + BOMB_DROP_CHANCE + KEY_DROP_CHANCE + luckBonus) make = () => new KeyDrop(x, y);
   if (make) for (let i = 0; i < mult; i++) room.items.push(make());
 });
+
+// 炸彈爆炸 → 畫面震動
+EventBus.on("bombExploded", () => camera.shake(10, 5));
 
 // 玩家死亡 → 記錄最高層數 → 死亡畫面
 EventBus.on("playerDied", () => {

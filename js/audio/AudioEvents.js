@@ -34,6 +34,9 @@ export function wireAudioEvents(state, STATES) {
     }
   });
 
+  // ── 炸彈 ──
+  EventBus.on("bombExploded", () => Audio.playSFX("explosion"));
+
   // ── 道具 / 經濟 ──
   EventBus.on("itemPickup",       () => Audio.playSFX("item_pickup"));
   EventBus.on("synergyActivated", () => Audio.playSFX("synergy"));

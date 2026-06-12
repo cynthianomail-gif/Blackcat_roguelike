@@ -1,7 +1,8 @@
 // =====================================================
 // Input.js — 鍵盤輸入管理
 // 操作：A/D/箭頭移動、W/Space 跳、S/↓ 趴下（平台上+跳=下穿）、
-//       J 射擊（按住）、L EX 必殺、Shift Dash、E 主動道具、Tab 地圖、Esc 暫停
+//       J 射擊（按住）、L EX 必殺、Shift Dash、B 炸彈、E 主動道具、
+//       Tab 地圖、Esc 暫停
 // =====================================================
 
 export class Input {
@@ -34,6 +35,7 @@ export class Input {
 
   get jumpPressed()  { return this.pressed("KeyW") || this.pressed("Space") || this.pressed("ArrowUp"); }
   get downHeld()     { return this.isDown("KeyS") || this.isDown("ArrowDown"); } // 趴下 / 平台下穿
+  get bombPressed()  { return this.pressed("KeyB"); } // 放置炸彈（開隱藏房/範圍傷害）
   get shootHeld()    { return this.isDown("KeyJ"); }
   get exPressed()    { return this.pressed("KeyL"); }
   get dashPressed()  { return this.pressed("ShiftLeft") || this.pressed("ShiftRight"); }

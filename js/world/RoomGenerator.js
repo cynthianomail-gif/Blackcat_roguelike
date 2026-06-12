@@ -140,15 +140,24 @@ export function generateFloor(floorNum, seed) {
   }
 
   // ── Step 4b: 佈置跳台（M5.5）──────────────────────
-  // 有 N 門：保證階梯（TIER1 側邊 → TIER2 門下方）讓玩家跳得進北門；
-  // 無 N 門的戰鬥房（NORMAL/CHALLENGE/BOSS）：一座戰術平台（站高打空中怪）
+  // 階梯（TIER1 側邊 → TIER2 門下方）：有 N 門、或北側是隱藏房
+  // （炸彈要放上 TIER2 才炸得到天花板門位）都要保證可達；
+  // 隱藏房自身：上方有房間（回程門會開在天花板）也要有梯。
+  // 其餘戰鬥房（NORMAL/CHALLENGE/BOSS）：一座戰術平台（站高打空中怪）
+  const addLadder = (room) => {
+    const side = rng.float() < 0.5 ? -1 : 1; // TIER1 隨機放左/右側
+    const t1x = side === -1 ? 170 : CANVAS_W - 170 - 180;
+    room.platforms.push(new Platform(t1x, PLATFORM_TIER1_Y, 180));
+    room.platforms.push(new Platform(CANVAS_W / 2 - 75, PLATFORM_TIER2_Y, 150)); // 北門正下方
+  };
   for (const room of rooms) {
-    if (room.type === ROOM_TYPES.SECRET) continue;
-    if (room.doors.N) {
-      const side = rng.float() < 0.5 ? -1 : 1; // TIER1 隨機放左/右側
-      const t1x = side === -1 ? 170 : CANVAS_W - 170 - 180;
-      room.platforms.push(new Platform(t1x, PLATFORM_TIER1_Y, 180));
-      room.platforms.push(new Platform(CANVAS_W / 2 - 75, PLATFORM_TIER2_Y, 150)); // 北門正下方
+    const above = grid[room.gridPos.y - 1]?.[room.gridPos.x];
+    if (room.type === ROOM_TYPES.SECRET) {
+      if (above && above.type !== ROOM_TYPES.SECRET) addLadder(room);
+      continue;
+    }
+    if (room.doors.N || above?.type === ROOM_TYPES.SECRET) {
+      addLadder(room);
     } else if (room.type === ROOM_TYPES.NORMAL || room.type === ROOM_TYPES.CHALLENGE ||
                room.type === ROOM_TYPES.BOSS) {
       const slots = [150, CANVAS_W / 2 - 90, CANVAS_W - 150 - 180];

@@ -211,6 +211,37 @@ export const SFX_PRESETS = {
     });
   },
 
+  // ── 炸彈爆炸（噪音爆風 + 低頻轟）──────────────────────────
+  explosion: (ctx, dest) => {
+    const t = ctx.currentTime;
+    // 噪音爆風
+    const len = Math.floor(ctx.sampleRate * 0.4);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(2200, t);
+    lp.frequency.exponentialRampToValueAtTime(180, t + 0.35);
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.6, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    src.connect(lp); lp.connect(ng); ng.connect(dest);
+    src.start(t); src.stop(t + 0.4);
+    // 低頻轟
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(110, t);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.3);
+    g.gain.setValueAtTime(0.55, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(g); g.connect(dest);
+    o.start(t); o.stop(t + 0.35);
+  },
+
   // ── 開門 ─────────────────────────────────────────────────
   door_open: (ctx, dest) => {
     const o = ctx.createOscillator();

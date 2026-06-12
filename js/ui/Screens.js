@@ -64,7 +64,7 @@ export class Screens {
     }
     ctx.font = "13px sans-serif";
     ctx.fillStyle = "#777";
-    ctx.fillText("A/D 移動  W 跳躍  S 趴下（平台上+W 下穿）  J 吐毛球  L 必殺  Shift 衝刺  E 道具  Tab 地圖", cx, 460);
+    ctx.fillText("A/D 移動  W 跳躍  S 趴下（平台上+W 下穿）  J 吐毛球  L 必殺  Shift 衝刺  B 炸彈  E 道具  Tab 地圖", cx, 460);
     ctx.restore();
   }
 
