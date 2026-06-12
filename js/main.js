@@ -276,6 +276,8 @@ EventBus.on("coinPickup", () => {
   Particles.burst({ x: p.x + p.w / 2, y: p.y + p.h / 2, count: 6,
                     color: "#ffd75e", speed: 2.2, grav: 0.08, life: 20, size: 2.5 });
 });
+EventBus.on("roomChanged", () => Particles.clear());
+EventBus.on("floorChanged", () => Particles.clear());
 
 // 炸彈爆炸 → 畫面震動
 EventBus.on("bombExploded", () => camera.shake(10, 5));

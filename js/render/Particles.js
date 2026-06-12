@@ -39,6 +39,12 @@ export class ParticleSystem {
     });
   }
 
+  // 換房/換層時清空（殘影不跨房，比照 bulletPool.clear 慣例）
+  clear() {
+    this.parts.length = 0;
+    this.ghosts.length = 0;
+  }
+
   update(dt) {
     for (const p of this.parts) {
       p.x += p.vx * dt; p.y += p.vy * dt;
@@ -63,12 +69,11 @@ export class ParticleSystem {
       ctx.restore();
     }
     for (const p of this.parts) {
-      ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
   }
 }
 
