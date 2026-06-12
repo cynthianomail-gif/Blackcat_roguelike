@@ -33,6 +33,7 @@ export class BossController extends BaseEnemy {
     this.deathTimer = -1;   // >=0 = 死亡動畫中
     this.patternAngle = 0;  // Phase 2 旋轉散射累積角
     this.hoverTimer = 0;
+    this.atkAnim = 0;       // 出手動畫剩餘幀（>0 = 顯示攻擊幀+拉伸）
     this.bulletPool = new BossBulletPool();
     this.contactDamage = true;
   }
@@ -83,7 +84,9 @@ export class BossController extends BaseEnemy {
     if (this.fireTimer <= 0 && player?.active) {
       this.fireTimer = this.currentPhase.interval;
       this.currentPhase.fire(this, player, this.bulletPool);
+      this.atkAnim = 16;                        // 出手：攻擊幀+拉伸 16 幀
     }
+    if (this.atkAnim > 0) this.atkAnim -= dt;
 
     this.bulletPool.update(dt, player);
 
@@ -126,11 +129,21 @@ export class BossController extends BaseEnemy {
     const w = this.w, h = this.h;
 
     // ── Higgsfield 剪影素材（有圖用圖；受傷白閃用 invert）──
-    const img = this.pattern.sprite ? getAsset(this.pattern.sprite) : null;
+    // 前搖蓄力（開火前 20 幀壓扁）/ 出手（攻擊幀+拉伸）
+    const telegraph = !this.isDying && this.fireTimer <= 20 && this.atkAnim <= 0;
+    const striking = this.atkAnim > 0;
+    let sprKey = this.pattern.sprite;
+    if (striking && this.pattern.sprite) {
+      const atk = getAsset(this.pattern.sprite + "_atk");
+      if (atk) sprKey = this.pattern.sprite + "_atk";
+    }
+    const img = sprKey ? getAsset(sprKey) : null;
     if (img) {
       // 等比縮放塞進 w×h 範圍，底部對齊碰撞箱底
       const fit = Math.min(w / img.width, h / img.height);
       const dw = img.width * fit, dh = img.height * fit;
+      if (telegraph) ctx.scale(1.06, 0.92);              // 蓄力壓扁
+      else if (striking) ctx.scale(0.96, 1.06);          // 出手拉伸
       if (this.hurtFrames > 0) ctx.filter = "invert(1)";
       ctx.drawImage(img, -dw / 2, h / 2 - dh, dw, dh);
       ctx.filter = "none";
