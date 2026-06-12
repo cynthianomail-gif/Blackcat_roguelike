@@ -101,8 +101,8 @@ M7 已完成（2026-06-12，計畫在 `docs/superpowers/plans/2026-06-12-m7-art-
 1. **真人試玩平衡**：數值旋鈕在 `Constants.js`（`ENEMY_HP_SCALE` 2.5／`BOSS_HP_SCALE` 1.6）。無頭估算（單一 seed）：普通房 HP/房 F1≈59→F7≈180，對照目標 15–30s 大致在帶內；**F6 偏輕（≈86 HP/房）**、F1 Boss 變體上緣（352 HP）可能拖長，以體感為準
 2. **Audio-4 真人驗收**：開聲音完整玩一局確認 SFX 時機/音量（含新 explosion）
 3. 平台手感（M5.5 新增）＋炸彈/隱藏房手感（M6 pass 2 新增）
-4. **M7 真人視覺驗收**：新剪影/攻擊幀/轉場/key art 體感確認，**OK 後才部署**（`git push origin master:main master:gh-pages`）
-5. **文件收尾**：企畫書 docx 補記 M5.5 平台、M6 炸彈/隱藏房、M7 美術打磨與最終平衡數值（等體感調完一次寫，避免改兩次；docx 重打包流程見 §8）
+4. ~~M7 真人視覺驗收後部署~~ ✅ 已部署（2026-06-12，使用者指示直接上線）：<https://cynthianomail-gif.github.io/Blackcat_roguelike/>
+5. ~~文件收尾~~ ✅ 企畫書 docx 已更新 v2.2（里程碑表補 M5.5/M7 列＋M6 狀態、文末新增「10. 開發補記」四小節；備份 `_tmp/企畫書_backup_v2.1.docx`、編輯腳本 `_tmp/edit_plan_docx_v22.js`）。**若真人試玩後調了平衡數值，記得回寫 10.4 小節**
 
 ## 8. 已知小坑
 
