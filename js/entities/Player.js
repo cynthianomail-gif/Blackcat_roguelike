@@ -20,6 +20,8 @@ import {
 } from "../core/Constants.js";
 
 const CEILING_Y = 60; // 天花板（牆壁厚度）
+const LAND_SQUASH_FRAMES = 8; // 落地壓扁回彈總幀數（繪製期淡出分母共用）
+const AFTERIMAGE_LIFE = 12;   // 衝刺殘影壽命（幀）
 
 export class Player extends Entity {
   constructor(x, y, bulletPool) {
@@ -163,9 +165,10 @@ export class Player extends Entity {
     if (this.dashFrames > 0) {
       this.dashFrames -= dt;
       this.x += this.facing * DASH_SPEED * dt;
-      // 衝刺殘影：每 3 幀取樣一張
+      // 衝刺殘影：每 3 幀取樣一張（快照 w/h，趴下不影響已留下的殘影）
       if (Math.floor(this.dashFrames) % 3 === 0) {
-        this.afterimages.push({ x: this.x, y: this.y, facing: this.facing, life: 12 });
+        this.afterimages.push({ x: this.x, y: this.y, w: this.w, h: this.h,
+                                facing: this.facing, life: AFTERIMAGE_LIFE });
         if (this.afterimages.length > 6) this.afterimages.shift();
       }
     } else {
@@ -198,7 +201,7 @@ export class Player extends Entity {
       this.vy = 0;
       this.isGrounded = true;
       this.standingPlatform = null;
-      if (!wasGrounded) { EventBus.emit("playerLand", this); this.landSquash = 8; }
+      if (!wasGrounded) { EventBus.emit("playerLand", this); this.landSquash = LAND_SQUASH_FRAMES; }
     } else {
       this.isGrounded = false;
       this.standingPlatform = null;
@@ -212,7 +215,7 @@ export class Player extends Entity {
           this.vy = 0;
           this.isGrounded = true;
           this.standingPlatform = p;
-          if (!wasGrounded) { EventBus.emit("playerLand", this); this.landSquash = 8; }
+          if (!wasGrounded) { EventBus.emit("playerLand", this); this.landSquash = LAND_SQUASH_FRAMES; }
           break;
         }
       }
@@ -471,12 +474,12 @@ export class Player extends Entity {
     // ── 衝刺殘影（世界座標，畫在本體之下）──
     const ghostImg = getAsset("player_jump") || getAsset("player_idle");
     if (ghostImg) for (const a of this.afterimages) {
-      const fit = Math.min(this.w / ghostImg.width, (this.h + 10) / ghostImg.height);
+      const fit = Math.min(a.w / ghostImg.width, (a.h + 10) / ghostImg.height);
       const dw = ghostImg.width * fit, dh = ghostImg.height * fit;
       ctx.save();
-      ctx.globalAlpha = (a.life / 12) * 0.25;
-      ctx.translate(a.x + this.w / 2, a.y + this.h);
-      ctx.scale(-a.facing, 1);
+      ctx.globalAlpha = (a.life / AFTERIMAGE_LIFE) * 0.25;
+      ctx.translate(a.x + a.w / 2, a.y + a.h);
+      ctx.scale(a.facing, 1); // 與本體同向（玩家素材原生朝右）
       ctx.drawImage(ghostImg, -dw / 2, -dh, dw, dh);
       ctx.restore();
     }
@@ -499,7 +502,7 @@ export class Player extends Entity {
 
     // ── 落地壓扁回彈（錨點腳底；只影響繪製，不動碰撞箱）──
     if (this.landSquash > 0) {
-      const k = this.landSquash / 8; // 1→0
+      const k = this.landSquash / LAND_SQUASH_FRAMES; // 1→0
       ctx.translate(0, h / 2);
       ctx.scale(1 + 0.08 * k, 1 - 0.14 * k);
       ctx.translate(0, -h / 2);
