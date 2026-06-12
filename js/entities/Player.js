@@ -113,6 +113,8 @@ export class Player extends Entity {
     this.tiltAngle = 0;     // 度
     this.isShooting = false;
     this.mouthOpenScale = 0; // 0~1，EX 時瞬間放大
+    this.landSquash = 0;     // 落地壓扁回彈剩餘幀
+    this.afterimages = [];   // 衝刺殘影 {x,y,facing,life}
   }
 
   get isInvincible() { return this.invincibleFrames > 0 || this.dashFrames > 0; }
@@ -161,6 +163,11 @@ export class Player extends Entity {
     if (this.dashFrames > 0) {
       this.dashFrames -= dt;
       this.x += this.facing * DASH_SPEED * dt;
+      // 衝刺殘影：每 3 幀取樣一張
+      if (Math.floor(this.dashFrames) % 3 === 0) {
+        this.afterimages.push({ x: this.x, y: this.y, facing: this.facing, life: 12 });
+        if (this.afterimages.length > 6) this.afterimages.shift();
+      }
     } else {
       this.x += ax * effSpeed * dt;
       if (ax !== 0) this.facing = ax > 0 ? 1 : -1;
@@ -191,7 +198,7 @@ export class Player extends Entity {
       this.vy = 0;
       this.isGrounded = true;
       this.standingPlatform = null;
-      if (!wasGrounded) EventBus.emit("playerLand", this);
+      if (!wasGrounded) { EventBus.emit("playerLand", this); this.landSquash = 8; }
     } else {
       this.isGrounded = false;
       this.standingPlatform = null;
@@ -205,7 +212,7 @@ export class Player extends Entity {
           this.vy = 0;
           this.isGrounded = true;
           this.standingPlatform = p;
-          if (!wasGrounded) EventBus.emit("playerLand", this);
+          if (!wasGrounded) { EventBus.emit("playerLand", this); this.landSquash = 8; }
           break;
         }
       }
@@ -276,6 +283,11 @@ export class Player extends Entity {
     }
     const targetTilt = -ax * TILT_MAX;
     this.tiltAngle += (targetTilt - this.tiltAngle) * TILT_SPEED * dt;
+
+    // ── 手感動畫衰減：落地壓扁 / 衝刺殘影 ──
+    if (this.landSquash > 0) this.landSquash -= dt;
+    for (const a of this.afterimages) a.life -= dt;
+    this.afterimages = this.afterimages.filter(a => a.life > 0);
   }
 
   // 蓄力倍率：通過的時間檔位數（0-5 檔）線性換算
@@ -455,6 +467,20 @@ export class Player extends Entity {
 
   draw(ctx) {
     this.drawLasers(ctx); // 雷射光束在身體之前畫（世界座標）
+
+    // ── 衝刺殘影（世界座標，畫在本體之下）──
+    const ghostImg = getAsset("player_jump") || getAsset("player_idle");
+    if (ghostImg) for (const a of this.afterimages) {
+      const fit = Math.min(this.w / ghostImg.width, (this.h + 10) / ghostImg.height);
+      const dw = ghostImg.width * fit, dh = ghostImg.height * fit;
+      ctx.save();
+      ctx.globalAlpha = (a.life / 12) * 0.25;
+      ctx.translate(a.x + this.w / 2, a.y + this.h);
+      ctx.scale(-a.facing, 1);
+      ctx.drawImage(ghostImg, -dw / 2, -dh, dw, dh);
+      ctx.restore();
+    }
+
     // 受傷閃爍：invincibleFrames 期間每 BLINK_INTERVAL 幀隱藏一次
     if (this.invincibleFrames > 0 &&
         Math.floor(this.invincibleFrames / BLINK_INTERVAL) % 2 === 1) {
@@ -471,6 +497,14 @@ export class Player extends Entity {
 
     const w = this.w, h = this.h;
 
+    // ── 落地壓扁回彈（錨點腳底；只影響繪製，不動碰撞箱）──
+    if (this.landSquash > 0) {
+      const k = this.landSquash / 8; // 1→0
+      ctx.translate(0, h / 2);
+      ctx.scale(1 + 0.08 * k, 1 - 0.14 * k);
+      ctx.translate(0, -h / 2);
+    }
+
     // ── Higgsfield 貓咪剪影素材（有圖用圖；無圖幾何 fallback）──
     // 姿態優先序：空中（貼牆=爬牆圖）> 趴下 > 跑步兩幀交替 > 待機
     let poseKey;
@@ -482,11 +516,6 @@ export class Player extends Entity {
     if (img) {
       const dh = h * 1.3; // 素材比碰撞箱稍大，視覺飽滿
       const dw = dh * (img.width / img.height);
-      if (this.dashFrames > 0) { // Dash 殘影
-        ctx.globalAlpha = 0.3;
-        ctx.drawImage(img, -dw / 2 - this.facing * 14, h / 2 - dh, dw, dh);
-        ctx.globalAlpha = 1;
-      }
       ctx.drawImage(img, -dw / 2, h / 2 - dh, dw, dh);
       ctx.restore();
     } else {
